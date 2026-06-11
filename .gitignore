@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Logs
+parser.log
+*.log
+
+# Credentials / local config (do not commit real settings)
+printjob2openbis/config/settings.json
+
+# OS
+.DS_Store
+Thumbs.db

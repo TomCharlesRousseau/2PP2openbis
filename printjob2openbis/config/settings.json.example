@@ -1,0 +1,12 @@
+{
+  "openbis": {
+    "api_url": "https://your-openbis-instance/",
+    "username": "your_username",
+    "space": "YOUR_SPACE",
+    "project_name": "YOUR_PROJECT",
+    "collection": "PRINTJOB_EXP_STEP"
+  },
+  "excel": {
+    "file_path": "printjobs.xlsx"
+  }
+}
