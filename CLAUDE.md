@@ -40,7 +40,7 @@ printjob2openbis/
 ### Columns (A-AC)
 | Col | Header | Usage | Notes |
 |-----|--------|-------|-------|
-| A | Printjob Name # | object name | |
+| A | Print # | object name | |
 | B | Code | object code | |
 | C | Print date | description | already formatted |
 | D | Responsible person | description | |
@@ -72,7 +72,7 @@ printjob2openbis/
 
 ## Object Creation
 - **Type**: EXPERIMENTAL_STEP
-- **Name**: Printjob Name # (Column A)
+- **Name**: Print # (Column A)
 - **Code**: Code (Column B)
 - **Parents**: Resin ID (H), Substrate ID (J)
 

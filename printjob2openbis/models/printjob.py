@@ -13,7 +13,7 @@ class PrintJob:
     Represents a single 3D-printing job entry from the Excel spreadsheet.
 
     Attributes:
-        name: Printjob Name # (column A) – used as the openBIS object name.
+        name: Print # (column A) – used as the openBIS object name.
         code: Unique code (column B) – used as the openBIS object code.
         print_date: Print date (column C).
         responsible_person: Responsible person (column D).

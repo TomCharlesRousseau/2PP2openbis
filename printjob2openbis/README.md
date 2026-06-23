@@ -65,7 +65,7 @@ Headers must be on **row 2**. Supported columns:
 
 | Column | Field |
 |--------|-------|
-| A | Printjob Name # |
+| A | Print # |
 | B | Code |
 | C | Print date |
 | D | Responsible person |
@@ -96,7 +96,7 @@ Columns G (Resin Name), I (Substrate Name), L (empty), and M (F path) are ignore
 ## Behaviour
 
 - One `EXPERIMENTAL_STEP` object is created per print job row.
-- **Object name**: Printjob Name #  
+- **Object name**: Print #  
 - **Object code**: Code  
 - **Parents**: Resin ID and Substrate ID (openBIS permIds)
 - Duplicate codes are skipped with an INFO log message.

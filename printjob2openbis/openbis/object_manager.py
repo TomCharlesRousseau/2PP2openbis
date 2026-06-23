@@ -84,7 +84,7 @@ class ObjectManager:
         Create an ``EXPERIMENTAL_STEP`` object for a print job.
 
         Args:
-            name: Human-readable object name (Printjob Name #).
+            name: Human-readable object name (Print #).
             code: Unique object code.
             parents: List of parent permIds (Resin ID, Substrate ID).
             description: Formatted description text.

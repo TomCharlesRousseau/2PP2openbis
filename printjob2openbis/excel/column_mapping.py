@@ -9,7 +9,7 @@ are listed separately.
 # Mapping from Excel header (as it appears in row 2) to PrintJob field name.
 # Columns that are intentionally ignored are NOT listed here.
 COLUMN_TO_FIELD: dict[str, str] = {
-    "Printjob Name #": "name",
+    "Print #": "name",
     "Code": "code",
     "Print date": "print_date",
     "Responsible person": "responsible_person",
@@ -42,7 +42,7 @@ COLUMN_TO_FIELD: dict[str, str] = {
 
 # Headers that must be present for the parser to proceed.
 REQUIRED_COLUMNS: list[str] = [
-    "Printjob Name #",
+    "Print #",
     "Code",
 ]
 

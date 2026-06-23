@@ -101,7 +101,7 @@ class TestColumnMapping(unittest.TestCase):
             )
 
     def test_name_maps_to_name(self):
-        self.assertEqual(COLUMN_TO_FIELD["Printjob Name #"], "name")
+        self.assertEqual(COLUMN_TO_FIELD["Print #"], "name")
 
     def test_code_maps_to_code(self):
         self.assertEqual(COLUMN_TO_FIELD["Code"], "code")
@@ -303,7 +303,7 @@ class TestExcelParser(unittest.TestCase):
 
         # Row 2 – headers (must match COLUMN_TO_FIELD keys)
         headers = [
-            "Printjob Name #",  # A
+            "Print #",  # A
             "Code",             # B
             "Print date",       # C
             "Responsible person",  # D
