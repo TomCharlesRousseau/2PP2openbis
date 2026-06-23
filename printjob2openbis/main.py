@@ -166,6 +166,7 @@ class PrintJobParser:
             code=code,
             parents=job.parent_ids(),
             description=description,
+            substrate_id=job.substrate_id,
             print_date=job.print_date,
         )
 

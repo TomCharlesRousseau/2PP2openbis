@@ -569,3 +569,662 @@ Found columns: ['Print #', 'Code', 'Print date', 'Name', 'Design', '3DPoli path'
 2026-06-23 16:59:01 - __main__ - INFO - [main.py:187] - Failed:      0
 2026-06-23 16:59:01 - __main__ - INFO - [main.py:188] - ======================================================================
 2026-06-23 16:59:01 - openbis.connection - INFO - [connection.py:181] - Disconnected from openBIS
+2026-06-23 17:21:03 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: 2PP_print protocol.xlsx
+2026-06-23 17:21:04 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Name', 'Design', '3DPoli path', 'Resin', 'Resin ID', 'Substrate', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation', 'Washing date', 'Person', 'Washing solvent', 'CPD date', 'Person.1', 'CPD program', 'SEM green state', 'SEM sintered', 'LiMi green state', 'LiMi sintered', 'Person.2', 'Sintering Date', 'Furnace', 'Furnace ID', 'Profile Path', 'upload', 'uploaded', 'Comments']
+2026-06-23 17:21:04 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 82 data rows
+2026-06-23 17:21:04 - __main__ - INFO - [main.py:70] - ======================================================================
+2026-06-23 17:21:04 - __main__ - INFO - [main.py:71] - printjob2openbis starting
+2026-06-23 17:21:04 - __main__ - INFO - [main.py:72] - ======================================================================
+2026-06-23 17:21:04 - __main__ - INFO - [main.py:76] - Connecting to openBIS...
+2026-06-23 17:21:04 - openbis.connection - INFO - [connection.py:116] - Connecting to openBIS: https://main.datastore.bam.de/
+2026-06-23 17:21:04 - openbis.connection - INFO - [connection.py:117] - User: troussea
+2026-06-23 17:21:04 - openbis.connection - DEBUG - [connection.py:41] - Retrieved cached PAT for troussea
+2026-06-23 17:21:04 - openbis.connection - INFO - [connection.py:122] - Attempting login with cached PAT...
+2026-06-23 17:21:05 - openbis.connection - DEBUG - [connection.py:128] - Cached PAT expired or invalid: This token is no longer valid. Please provide an valid token or use the login method.
+2026-06-23 17:21:05 - openbis.connection - INFO - [connection.py:129] - Falling back to password authentication...
+2026-06-23 17:21:05 - openbis.connection - INFO - [connection.py:131] - Attempting login with password...
+2026-06-23 17:21:19 - openbis.connection - INFO - [connection.py:140] - Successfully logged in with password
+2026-06-23 17:21:19 - openbis.connection - DEBUG - [connection.py:65] - Cached PAT for troussea
+2026-06-23 17:21:19 - openbis.connection - INFO - [connection.py:145] - PAT cached for troussea (will be used next time)
+2026-06-23 17:21:19 - __main__ - INFO - [main.py:82] - Connected to openBIS
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000075' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000076' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000077' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000078' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000079' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000080' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000081' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000082' has no name – skipping
+2026-06-23 17:21:19 - excel.excel_parser - INFO - [excel_parser.py:99] - Parsed 74 print jobs from Excel
+2026-06-23 17:21:19 - __main__ - INFO - [main.py:92] - Processing 74 print job(s)...
+2026-06-23 17:21:19 - __main__ - INFO - [main.py:127] - Processing: 2PP-000001 (20260303_2PP_Text und BAM Logo)
+2026-06-23 17:21:21 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000001' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:21 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000001 already exists. Skipping.
+2026-06-23 17:21:21 - __main__ - INFO - [main.py:127] - Processing: 2PP-000002 (20260303_2PP_Line distance cubes Cura vs 3D-Poli)
+2026-06-23 17:21:21 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000002' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:21 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000002 already exists. Skipping.
+2026-06-23 17:21:21 - __main__ - INFO - [main.py:127] - Processing: 2PP-000003 (20260305_2PP_Multidirectional Slicing SchwarzP)
+2026-06-23 17:21:22 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000003' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:22 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000003 already exists. Skipping.
+2026-06-23 17:21:22 - __main__ - INFO - [main.py:127] - Processing: 2PP-000004 (20260305_2PP_Gradual Gratings)
+2026-06-23 17:21:23 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000004' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:23 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000004 already exists. Skipping.
+2026-06-23 17:21:23 - __main__ - INFO - [main.py:127] - Processing: 2PP-000005 (20260309_2PP_2D dot matrix power x duration)
+2026-06-23 17:21:24 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000005' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:24 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000005 already exists. Skipping.
+2026-06-23 17:21:24 - __main__ - INFO - [main.py:127] - Processing: 2PP-000006 (20260309_2PP_2D dot matrix power x duration_2)
+2026-06-23 17:21:25 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000006' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:25 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000006 already exists. Skipping.
+2026-06-23 17:21:25 - __main__ - INFO - [main.py:127] - Processing: 2PP-000007 (20260310_2PP_Multidirectional Slicing SchwarzD)
+2026-06-23 17:21:26 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000007' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:26 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000007 already exists. Skipping.
+2026-06-23 17:21:26 - __main__ - INFO - [main.py:127] - Processing: 2PP-000008 (20260310_2PP_SchwarzP array 1-5 unit cells)
+2026-06-23 17:21:26 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000008' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:26 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000008 already exists. Skipping.
+2026-06-23 17:21:26 - __main__ - INFO - [main.py:127] - Processing: 2PP-000009 (20260313_2PP_SP large infill test)
+2026-06-23 17:21:27 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000009' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:27 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000009 already exists. Skipping.
+2026-06-23 17:21:27 - __main__ - INFO - [main.py:127] - Processing: 2PP-000010 (20260316_2PP_SP large infill test)
+2026-06-23 17:21:28 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000010' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:28 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000010 already exists. Skipping.
+2026-06-23 17:21:28 - __main__ - INFO - [main.py:127] - Processing: 2PP-000011 (20260316_2PP_Hybrid Pillar Array)
+2026-06-23 17:21:41 - openbis.object_manager - DEBUG - [object_manager.py:53] - Object '20251209154344843-23579' found via direct lookup
+2026-06-23 17:21:41 - __main__ - ERROR - [main.py:142] - Row '2PP-000011': Substrate ID is empty or missing – skipping
+2026-06-23 17:21:41 - __main__ - INFO - [main.py:127] - Processing: 2PP-000012 (20260316_2PP_Hybrid Pillar Array  &Mw)
+2026-06-23 17:21:43 - openbis.object_manager - DEBUG - [object_manager.py:53] - Object '20251209154344843-23579' found via direct lookup
+2026-06-23 17:21:43 - __main__ - ERROR - [main.py:142] - Row '2PP-000012': Substrate ID is empty or missing – skipping
+2026-06-23 17:21:43 - __main__ - INFO - [main.py:127] - Processing: 2PP-000013 (20260317_2PP_Coordinate System Origin Test)
+2026-06-23 17:21:43 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000013' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:43 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000013 already exists. Skipping.
+2026-06-23 17:21:43 - __main__ - INFO - [main.py:127] - Processing: 2PP-000014 (20260317_2PP_UV-Sheet Text)
+2026-06-23 17:21:44 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000014' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:44 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000014 already exists. Skipping.
+2026-06-23 17:21:44 - __main__ - INFO - [main.py:127] - Processing: 2PP-000015 (20260317_2PP_DataMatrix Code Test)
+2026-06-23 17:21:45 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000015' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:45 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000015 already exists. Skipping.
+2026-06-23 17:21:45 - __main__ - INFO - [main.py:127] - Processing: 2PP-000016 (20260317_2PP_Pillars_TPMS)
+2026-06-23 17:21:46 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000016' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:46 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000016 already exists. Skipping.
+2026-06-23 17:21:46 - __main__ - INFO - [main.py:127] - Processing: 2PP-000017 (20260319_2PP_Hybrid Pillar Array)
+2026-06-23 17:21:47 - openbis.object_manager - DEBUG - [object_manager.py:53] - Object '20251209154344843-23579' found via direct lookup
+2026-06-23 17:21:47 - __main__ - ERROR - [main.py:142] - Row '2PP-000017': Substrate ID is empty or missing – skipping
+2026-06-23 17:21:47 - __main__ - INFO - [main.py:127] - Processing: 2PP-000018 (20260414_2PP_SchwarzP 2x2x2 array powerxspeed)
+2026-06-23 17:21:48 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000018' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:48 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000018 already exists. Skipping.
+2026-06-23 17:21:48 - __main__ - INFO - [main.py:127] - Processing: 2PP-000019 (20260415_2PP_SP large infill test)
+2026-06-23 17:21:49 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000019' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:49 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000019 already exists. Skipping.
+2026-06-23 17:21:49 - __main__ - INFO - [main.py:127] - Processing: 2PP-000020 (20260416_2PP_SP large infill test)
+2026-06-23 17:21:49 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000020' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:49 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000020 already exists. Skipping.
+2026-06-23 17:21:49 - __main__ - INFO - [main.py:127] - Processing: 2PP-000021 (20260416_2PP_DataMatrix Code Test2)
+2026-06-23 17:21:50 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000021' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:50 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000021 already exists. Skipping.
+2026-06-23 17:21:50 - __main__ - INFO - [main.py:127] - Processing: 2PP-000022 (20260416_2PP_SchwarzP 2x2x2 array z-offsetxlayerheight)
+2026-06-23 17:21:51 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000022' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:51 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000022 already exists. Skipping.
+2026-06-23 17:21:51 - __main__ - INFO - [main.py:127] - Processing: 2PP-000023 (20260421_2PP_cubes 5x3 array)
+2026-06-23 17:21:52 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000023' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:52 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000023 already exists. Skipping.
+2026-06-23 17:21:52 - __main__ - INFO - [main.py:127] - Processing: 2PP-000024 (20260422_2PP_Schwarz P 2x2x2 array powerxspeed2)
+2026-06-23 17:21:53 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000024' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:53 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000024 already exists. Skipping.
+2026-06-23 17:21:53 - __main__ - INFO - [main.py:127] - Processing: 2PP-000025 (20260428_2PP_speed array 3x5 5mW 1000-10000)
+2026-06-23 17:21:53 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000025' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:53 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000025 already exists. Skipping.
+2026-06-23 17:21:53 - __main__ - INFO - [main.py:127] - Processing: 2PP-000026 (20260428_2PP_speed array 3x5 8mW 7500-17500)
+2026-06-23 17:21:54 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000026' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:54 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000026 already exists. Skipping.
+2026-06-23 17:21:54 - __main__ - INFO - [main.py:127] - Processing: 2PP-000027 (20260504_2PP_cubes 3x3 array 7,8,9mW)
+2026-06-23 17:21:55 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000027' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:55 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000027 already exists. Skipping.
+2026-06-23 17:21:55 - __main__ - INFO - [main.py:127] - Processing: 2PP-000028 (20260504_2PP_cubes 3x3 array 4,5,6mW)
+2026-06-23 17:21:56 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000028' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:56 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000028 already exists. Skipping.
+2026-06-23 17:21:56 - __main__ - INFO - [main.py:127] - Processing: 2PP-000029 (20260505_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:21:57 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000029' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:57 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000029 already exists. Skipping.
+2026-06-23 17:21:57 - __main__ - INFO - [main.py:127] - Processing: 2PP-000030 (20260505_2PP_cubes u Schwarz P array nanoindent(5mW))
+2026-06-23 17:21:57 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000030' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:57 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000030 already exists. Skipping.
+2026-06-23 17:21:57 - __main__ - INFO - [main.py:127] - Processing: 2PP-000031 (20260529_2PP_cubes 3x3 array 4,5,6mW)
+2026-06-23 17:21:58 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000031' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:58 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000031 already exists. Skipping.
+2026-06-23 17:21:58 - __main__ - INFO - [main.py:127] - Processing: 2PP-000032 (20260601_2PP_Pillar Test 8YSZ)
+2026-06-23 17:21:59 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000032' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:21:59 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000032 already exists. Skipping.
+2026-06-23 17:21:59 - __main__ - INFO - [main.py:127] - Processing: 2PP-000033 (19000100_2PP_)
+2026-06-23 17:22:00 - __main__ - ERROR - [main.py:142] - Row '2PP-000033': Resin ID is empty or missing – skipping
+2026-06-23 17:22:00 - __main__ - INFO - [main.py:127] - Processing: 2PP-000034 (19000100_2PP_)
+2026-06-23 17:22:01 - __main__ - ERROR - [main.py:142] - Row '2PP-000034': Resin ID is empty or missing – skipping
+2026-06-23 17:22:01 - __main__ - INFO - [main.py:127] - Processing: 2PP-000035 (20260602_2PP_Bussi 100µm 1000 6mW)
+2026-06-23 17:22:01 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000035' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:01 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000035 already exists. Skipping.
+2026-06-23 17:22:01 - __main__ - INFO - [main.py:127] - Processing: 2PP-000036 (20260602_2PP_Bussi 100µm 5000 4mW)
+2026-06-23 17:22:02 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000036' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:02 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000036 already exists. Skipping.
+2026-06-23 17:22:02 - __main__ - INFO - [main.py:127] - Processing: 2PP-000037 (19000100_2PP_)
+2026-06-23 17:22:03 - __main__ - ERROR - [main.py:142] - Row '2PP-000037': Resin ID is empty or missing – skipping
+2026-06-23 17:22:03 - __main__ - INFO - [main.py:127] - Processing: 2PP-000038 (19000100_2PP_)
+2026-06-23 17:22:04 - __main__ - ERROR - [main.py:142] - Row '2PP-000038': Resin ID is empty or missing – skipping
+2026-06-23 17:22:04 - __main__ - INFO - [main.py:127] - Processing: 2PP-000039 (20260608_2PP_cubes 3x3 array 7,8,9mw)
+2026-06-23 17:22:05 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000039' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:05 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000039 already exists. Skipping.
+2026-06-23 17:22:05 - __main__ - INFO - [main.py:127] - Processing: 2PP-000040 (20260608_2PP_3-point-bending V01)
+2026-06-23 17:22:05 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000040' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:05 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000040 already exists. Skipping.
+2026-06-23 17:22:05 - __main__ - INFO - [main.py:127] - Processing: 2PP-000041 (20260609_2PP_Bus 50ym)
+2026-06-23 17:22:06 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000041' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:06 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000041 already exists. Skipping.
+2026-06-23 17:22:06 - __main__ - INFO - [main.py:127] - Processing: 2PP-000042 (20260609_2PP_Bus 50ym-2)
+2026-06-23 17:22:07 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000042' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:07 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000042 already exists. Skipping.
+2026-06-23 17:22:07 - __main__ - INFO - [main.py:127] - Processing: 2PP-000043 (20260609_2PP_Bus 50ym-3)
+2026-06-23 17:22:08 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000043' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:08 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000043 already exists. Skipping.
+2026-06-23 17:22:08 - __main__ - INFO - [main.py:127] - Processing: 2PP-000044 (20260609_2PP_Bus 50ym-4)
+2026-06-23 17:22:09 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000044' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:09 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000044 already exists. Skipping.
+2026-06-23 17:22:09 - __main__ - INFO - [main.py:127] - Processing: 2PP-000045 (20260609_2PP_Bus 50ym)
+2026-06-23 17:22:09 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000045' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:09 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000045 already exists. Skipping.
+2026-06-23 17:22:09 - __main__ - INFO - [main.py:127] - Processing: 2PP-000046 (20260609_2PP_Bus 50ym-2)
+2026-06-23 17:22:10 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000046' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:10 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000046 already exists. Skipping.
+2026-06-23 17:22:10 - __main__ - INFO - [main.py:127] - Processing: 2PP-000047 (20260609_2PP_Bus 50ym-3)
+2026-06-23 17:22:11 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000047' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:11 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000047 already exists. Skipping.
+2026-06-23 17:22:11 - __main__ - INFO - [main.py:127] - Processing: 2PP-000048 (20260609_2PP_Bus 50ym-4)
+2026-06-23 17:22:12 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000048' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:12 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000048 already exists. Skipping.
+2026-06-23 17:22:12 - __main__ - INFO - [main.py:127] - Processing: 2PP-000049 (19000100_2PP_Okawa grid)
+2026-06-23 17:22:13 - __main__ - ERROR - [main.py:142] - Row '2PP-000049': Resin ID is empty or missing – skipping
+2026-06-23 17:22:13 - __main__ - INFO - [main.py:127] - Processing: 2PP-000050 (20260615_2PP_BCC Lattice Tests)
+2026-06-23 17:22:13 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000050' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:13 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000050 already exists. Skipping.
+2026-06-23 17:22:13 - __main__ - INFO - [main.py:127] - Processing: 2PP-000051 (20260615_2PP_3-point-bending V01)
+2026-06-23 17:22:14 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000051' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:14 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000051 already exists. Skipping.
+2026-06-23 17:22:14 - __main__ - INFO - [main.py:127] - Processing: 2PP-000052 (20260616_2PP_Zylinder_5x5x10ym)
+2026-06-23 17:22:15 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000052' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:15 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000052 already exists. Skipping.
+2026-06-23 17:22:15 - __main__ - INFO - [main.py:127] - Processing: 2PP-000053 (20260616_2PP_Zylinder_15x15x30ym)
+2026-06-23 17:22:16 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000053' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:16 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000053 already exists. Skipping.
+2026-06-23 17:22:16 - __main__ - INFO - [main.py:127] - Processing: 2PP-000054 (20260616_2PP_Seerose 100 ym)
+2026-06-23 17:22:17 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000054' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:17 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000054 already exists. Skipping.
+2026-06-23 17:22:17 - __main__ - INFO - [main.py:127] - Processing: 2PP-000055 (20260616_2PP_Seerose 200 ym)
+2026-06-23 17:22:18 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000055' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:18 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000055 already exists. Skipping.
+2026-06-23 17:22:18 - __main__ - INFO - [main.py:127] - Processing: 2PP-000056 (20260616_2PP_Seerose 300 ym)
+2026-06-23 17:22:19 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000056' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:19 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000056 already exists. Skipping.
+2026-06-23 17:22:19 - __main__ - INFO - [main.py:127] - Processing: 2PP-000057 (20260616_2PP_Seerose 400 ym)
+2026-06-23 17:22:20 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000057' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:20 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000057 already exists. Skipping.
+2026-06-23 17:22:20 - __main__ - INFO - [main.py:127] - Processing: 2PP-000058 (20260616_2PP_Seerose 200 ym)
+2026-06-23 17:22:20 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000058' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:20 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000058 already exists. Skipping.
+2026-06-23 17:22:20 - __main__ - INFO - [main.py:127] - Processing: 2PP-000059 (20260616_2PP_Seerose 300 ym)
+2026-06-23 17:22:21 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000059' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:21 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000059 already exists. Skipping.
+2026-06-23 17:22:21 - __main__ - INFO - [main.py:127] - Processing: 2PP-000060 (20260623_2PP_speed modulation tests)
+2026-06-23 17:22:22 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000060' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:22 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000060 already exists. Skipping.
+2026-06-23 17:22:22 - __main__ - INFO - [main.py:127] - Processing: 2PP-000061 (20260623_2PP_power modulation tests)
+2026-06-23 17:22:23 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000061' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:23 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000061 already exists. Skipping.
+2026-06-23 17:22:23 - __main__ - INFO - [main.py:127] - Processing: 2PP-000062 (20260623_2PP_pause modulation tests)
+2026-06-23 17:22:24 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000062' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:24 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000062 already exists. Skipping.
+2026-06-23 17:22:24 - __main__ - INFO - [main.py:127] - Processing: 2PP-000063 (20260623_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:22:25 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000063' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:25 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000063 already exists. Skipping.
+2026-06-23 17:22:25 - __main__ - INFO - [main.py:127] - Processing: 2PP-000064 (20260623_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:22:26 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000064' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:26 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000064 already exists. Skipping.
+2026-06-23 17:22:26 - __main__ - INFO - [main.py:127] - Processing: 2PP-000065 (20260623_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:22:27 - openbis.object_manager - DEBUG - [object_manager.py:64] - Object '2PP-000065' found by code in /5.4_TROUSSEA/PROJECT_2PP/2PP_PRINTJOBS
+2026-06-23 17:22:27 - __main__ - INFO - [main.py:132] - EXPERIMENTAL_STEP 2PP-000065 already exists. Skipping.
+2026-06-23 17:22:27 - __main__ - INFO - [main.py:127] - Processing: 2PP-000066 (19000100_2PP_)
+2026-06-23 17:22:28 - __main__ - ERROR - [main.py:142] - Row '2PP-000066': Resin ID is empty or missing – skipping
+2026-06-23 17:22:28 - __main__ - INFO - [main.py:127] - Processing: 2PP-000067 (19000100_2PP_)
+2026-06-23 17:22:28 - __main__ - ERROR - [main.py:142] - Row '2PP-000067': Resin ID is empty or missing – skipping
+2026-06-23 17:22:28 - __main__ - INFO - [main.py:127] - Processing: 2PP-000068 (19000100_2PP_)
+2026-06-23 17:22:29 - __main__ - ERROR - [main.py:142] - Row '2PP-000068': Resin ID is empty or missing – skipping
+2026-06-23 17:22:29 - __main__ - INFO - [main.py:127] - Processing: 2PP-000069 (19000100_2PP_)
+2026-06-23 17:22:30 - __main__ - ERROR - [main.py:142] - Row '2PP-000069': Resin ID is empty or missing – skipping
+2026-06-23 17:22:30 - __main__ - INFO - [main.py:127] - Processing: 2PP-000070 (19000100_2PP_)
+2026-06-23 17:22:31 - __main__ - ERROR - [main.py:142] - Row '2PP-000070': Resin ID is empty or missing – skipping
+2026-06-23 17:22:31 - __main__ - INFO - [main.py:127] - Processing: 2PP-000071 (19000100_2PP_)
+2026-06-23 17:22:32 - __main__ - ERROR - [main.py:142] - Row '2PP-000071': Resin ID is empty or missing – skipping
+2026-06-23 17:22:32 - __main__ - INFO - [main.py:127] - Processing: 2PP-000072 (19000100_2PP_)
+2026-06-23 17:22:33 - __main__ - ERROR - [main.py:142] - Row '2PP-000072': Resin ID is empty or missing – skipping
+2026-06-23 17:22:33 - __main__ - INFO - [main.py:127] - Processing: 2PP-000073 (19000100_2PP_)
+2026-06-23 17:22:33 - __main__ - ERROR - [main.py:142] - Row '2PP-000073': Resin ID is empty or missing – skipping
+2026-06-23 17:22:33 - __main__ - INFO - [main.py:127] - Processing: 2PP-000074 (19000100_2PP_)
+2026-06-23 17:22:34 - __main__ - ERROR - [main.py:142] - Row '2PP-000074': Resin ID is empty or missing – skipping
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:181] - ======================================================================
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:182] - SUMMARY
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:183] - ======================================================================
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:184] - Total rows:  74
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:185] - Created:     0
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:186] - Skipped:     74
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:187] - Failed:      0
+2026-06-23 17:22:34 - __main__ - INFO - [main.py:188] - ======================================================================
+2026-06-23 17:22:35 - openbis.connection - INFO - [connection.py:181] - Disconnected from openBIS
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: C:\Users\troussea\AppData\Local\Temp\tmpio07b7gz.xlsx
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Responsible person', 'Design', '3DPoli path', 'Resin Name', 'Resin ID', 'Substrate Name', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation']
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 1 data rows
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:99] - Parsed 1 print jobs from Excel
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: C:\Users\troussea\AppData\Local\Temp\tmpsm20fqxr.xlsx
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Responsible person', 'Design', '3DPoli path', 'Resin Name', 'Resin ID', 'Substrate Name', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation']
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 1 data rows
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:99] - Parsed 1 print jobs from Excel
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: C:\Users\troussea\AppData\Local\Temp\tmp0i0mhywq.xlsx
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Responsible person', 'Design', '3DPoli path', 'Resin Name', 'Resin ID', 'Substrate Name', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation']
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 1 data rows
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:99] - Parsed 1 print jobs from Excel
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: C:\Users\troussea\AppData\Local\Temp\tmpmccra9z9.xlsx
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Responsible person', 'Design', '3DPoli path', 'Resin Name', 'Resin ID', 'Substrate Name', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation']
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 1 data rows
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:99] - Parsed 1 print jobs from Excel
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: C:\Users\troussea\AppData\Local\Temp\tmpibsmzo1n.xlsx
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Responsible person', 'Design', '3DPoli path', 'Resin Name', 'Resin ID', 'Substrate Name', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation']
+2026-06-23 17:39:55 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 1 data rows
+2026-06-23 17:40:40 - excel.excel_parser - INFO - [excel_parser.py:59] - Loading Excel file: 2PP_print protocol.xlsx
+2026-06-23 17:40:40 - excel.excel_parser - INFO - [excel_parser.py:64] - Found columns: ['Print #', 'Code', 'Print date', 'Name', 'Design', '3DPoli path', 'Resin', 'Resin ID', 'Substrate', 'Substrate ID', 'Spacer', 'Unnamed: 11', 'F path', 'zmin', 'zmax', 'max z height [µm]', 'xmin', 'xmax', 'max x height [µm]', 'ymin', 'ymax', 'max y height [µm]', 'Lense', 'R', 'Max power from calibration', 'Infinite FOV', 'Tilt alpha degree', 'Tilt beta degree', 'Tilt compensation', 'Washing date', 'Person', 'Washing solvent', 'CPD date', 'Person.1', 'CPD program', 'SEM green state', 'SEM sintered', 'LiMi green state', 'LiMi sintered', 'Person.2', 'Sintering Date', 'Furnace', 'Furnace ID', 'Profile Path', 'upload', 'uploaded', 'Comments']
+2026-06-23 17:40:40 - excel.excel_parser - INFO - [excel_parser.py:66] - Loaded 82 data rows
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:70] - ======================================================================
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:71] - printjob2openbis starting
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:72] - ======================================================================
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:84] - [DRY RUN] Skipping openBIS connection
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000075' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000076' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000077' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000078' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000079' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000080' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000081' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - WARNING - [excel_parser.py:128] - Row with code '2PP-000082' has no name – skipping
+2026-06-23 17:40:40 - excel.excel_parser - INFO - [excel_parser.py:99] - Parsed 74 print jobs from Excel
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:92] - Processing 74 print job(s)...
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000001 (20260303_2PP_Text und BAM Logo)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000001'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260303_2PP_Text und BAM Logo
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153656357-40208
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000002 (20260303_2PP_Line distance cubes Cura vs 3D-Poli)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000002'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260303_2PP_Line distance cubes Cura vs 3D-Poli
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153656357-40208
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000003 (20260305_2PP_Multidirectional Slicing SchwarzP)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000003'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260305_2PP_Multidirectional Slicing SchwarzP
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153656357-40208
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000004 (20260305_2PP_Gradual Gratings)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000004'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260305_2PP_Gradual Gratings
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153656357-40208
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000005 (20260309_2PP_2D dot matrix power x duration)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000005'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260309_2PP_2D dot matrix power x duration
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152412162-47018
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000006 (20260309_2PP_2D dot matrix power x duration_2)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000006'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260309_2PP_2D dot matrix power x duration_2
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152412162-47018
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000007 (20260310_2PP_Multidirectional Slicing SchwarzD)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000007'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260310_2PP_Multidirectional Slicing SchwarzD
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152412162-47018
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000008 (20260310_2PP_SchwarzP array 1-5 unit cells)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000008'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260310_2PP_SchwarzP array 1-5 unit cells
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152412162-47018
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000009 (20260313_2PP_SP large infill test)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000009'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260313_2PP_SP large infill test
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152450862-47019
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000010 (20260316_2PP_SP large infill test)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000010'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260316_2PP_SP large infill test
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152450862-47019
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000011 (20260316_2PP_Hybrid Pillar Array)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000011'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260316_2PP_Hybrid Pillar Array
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20251209154344843-23579
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000012 (20260316_2PP_Hybrid Pillar Array  &Mw)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000012'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260316_2PP_Hybrid Pillar Array  &Mw
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20251209154344843-23579
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000013 (20260317_2PP_Coordinate System Origin Test)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000013'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260317_2PP_Coordinate System Origin Test
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152609654-47020
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000014 (20260317_2PP_UV-Sheet Text)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000014'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260317_2PP_UV-Sheet Text
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152609654-47020
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000015 (20260317_2PP_DataMatrix Code Test)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000015'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260317_2PP_DataMatrix Code Test
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152609654-47020
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000016 (20260317_2PP_Pillars_TPMS)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000016'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260317_2PP_Pillars_TPMS
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152609654-47020
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000017 (20260319_2PP_Hybrid Pillar Array)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000017'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260319_2PP_Hybrid Pillar Array
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20251209154344843-23579
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000018 (20260414_2PP_SchwarzP 2x2x2 array powerxspeed)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000018'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260414_2PP_SchwarzP 2x2x2 array powerxspeed
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152642775-47021
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000019 (20260415_2PP_SP large infill test)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000019'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260415_2PP_SP large infill test
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20251113100232864-20580
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152747687-47022
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000020 (20260416_2PP_SP large infill test)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000020'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260416_2PP_SP large infill test
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20251113100232864-20580
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152747687-47022
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000021 (20260416_2PP_DataMatrix Code Test2)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000021'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260416_2PP_DataMatrix Code Test2
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152642775-47021
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000022 (20260416_2PP_SchwarzP 2x2x2 array z-offsetxlayerheight)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000022'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260416_2PP_SchwarzP 2x2x2 array z-offsetxlayerheight
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260304152642775-47021
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000023 (20260421_2PP_cubes 5x3 array)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000023'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260421_2PP_cubes 5x3 array
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131257526-50864
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000024 (20260422_2PP_Schwarz P 2x2x2 array powerxspeed2)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000024'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260422_2PP_Schwarz P 2x2x2 array powerxspeed2
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131303703-50866
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000025 (20260428_2PP_speed array 3x5 5mW 1000-10000)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000025'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260428_2PP_speed array 3x5 5mW 1000-10000
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131310069-50868
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000026 (20260428_2PP_speed array 3x5 8mW 7500-17500)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000026'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260428_2PP_speed array 3x5 8mW 7500-17500
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131310069-50868
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000027 (20260504_2PP_cubes 3x3 array 7,8,9mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000027'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260504_2PP_cubes 3x3 array 7,8,9mW
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094438586-53109
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000028 (20260504_2PP_cubes 3x3 array 4,5,6mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000028'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260504_2PP_cubes 3x3 array 4,5,6mW
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094438586-53109
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000029 (20260505_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000029'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260505_2PP_cubes u Schwarz P array nanoindent(8mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094438586-53109
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000030 (20260505_2PP_cubes u Schwarz P array nanoindent(5mW))
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000030'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260505_2PP_cubes u Schwarz P array nanoindent(5mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094438586-53109
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000031 (20260529_2PP_cubes 3x3 array 4,5,6mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000031'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260529_2PP_cubes 3x3 array 4,5,6mW
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131253315-50863
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000032 (20260601_2PP_Pillar Test 8YSZ)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000032'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260601_2PP_Pillar Test 8YSZ
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260528144122603-52269
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260126175936336-39132
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000033 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000033'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000034 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000034'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000035 (20260602_2PP_Bussi 100µm 1000 6mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000035'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260602_2PP_Bussi 100µm 1000 6mW
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094439480-53111
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000036 (20260602_2PP_Bussi 100µm 5000 4mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000036'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260602_2PP_Bussi 100µm 5000 4mW
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094439480-53111
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000037 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000037'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000038 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000038'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000039 (20260608_2PP_cubes 3x3 array 7,8,9mw)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000039'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260608_2PP_cubes 3x3 array 7,8,9mw
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131253315-50863
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000040 (20260608_2PP_3-point-bending V01)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000040'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260608_2PP_3-point-bending V01
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260430131253315-50863
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000041 (20260609_2PP_Bus 50ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000041'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609153436383-53136
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000042 (20260609_2PP_Bus 50ym-2)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000042'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym-2
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609153436383-53136
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000043 (20260609_2PP_Bus 50ym-3)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000043'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym-3
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609153436383-53136
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000044 (20260609_2PP_Bus 50ym-4)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000044'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym-4
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609153436383-53136
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000045 (20260609_2PP_Bus 50ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000045'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609155354152-53144
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000046 (20260609_2PP_Bus 50ym-2)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000046'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym-2
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609155354152-53144
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000047 (20260609_2PP_Bus 50ym-3)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000047'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym-3
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609155354152-53144
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000048 (20260609_2PP_Bus 50ym-4)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000048'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260609_2PP_Bus 50ym-4
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609155354152-53144
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000049 (19000100_2PP_Okawa grid)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000049'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_Okawa grid
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000050 (20260615_2PP_BCC Lattice Tests)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000050'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260615_2PP_BCC Lattice Tests
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153714534-40209
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000051 (20260615_2PP_3-point-bending V01)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000051'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260615_2PP_3-point-bending V01
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153714534-40209
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000052 (20260616_2PP_Zylinder_5x5x10ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000052'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Zylinder_5x5x10ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094439480-53111
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000053 (20260616_2PP_Zylinder_15x15x30ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000053'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Zylinder_15x15x30ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094439480-53111
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000054 (20260616_2PP_Seerose 100 ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000054'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Seerose 100 ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609160921677-53158
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000055 (20260616_2PP_Seerose 200 ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000055'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Seerose 200 ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609160921677-53158
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000056 (20260616_2PP_Seerose 300 ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000056'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Seerose 300 ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609160921677-53158
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000057 (20260616_2PP_Seerose 400 ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000057'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Seerose 400 ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609160921677-53158
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000058 (20260616_2PP_Seerose 200 ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000058'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Seerose 200 ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609160921677-53158
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000059 (20260616_2PP_Seerose 300 ym)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000059'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260616_2PP_Seerose 300 ym
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609160921677-53158
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000060 (20260623_2PP_speed modulation tests)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000060'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260623_2PP_speed modulation tests
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153334077-40204
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000061 (20260623_2PP_power modulation tests)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000061'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260623_2PP_power modulation tests
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153334077-40204
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000062 (20260623_2PP_pause modulation tests)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000062'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260623_2PP_pause modulation tests
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153334077-40204
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000063 (20260623_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000063'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260623_2PP_cubes u Schwarz P array nanoindent(8mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153334077-40204
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000064 (20260623_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000064'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260623_2PP_cubes u Schwarz P array nanoindent(8mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260203153334077-40204
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000065 (20260623_2PP_cubes u Schwarz P array nanoindent(8mW))
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000065'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        20260623_2PP_cubes u Schwarz P array nanoindent(8mW)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    20260205131700798-40543
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: 20260609094441331-53114
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000066 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000066'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000067 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000067'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000068 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000068'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000069 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000069'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000070 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000070'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000071 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000071'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000072 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000072'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000073 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000073'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:127] - Processing: 2PP-000074 (19000100_2PP_)
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:156] -   [DRY RUN] Would create EXPERIMENTAL_STEP '2PP-000074'
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:157] -     Name:        19000100_2PP_
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:158] -     Resin ID:    None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:159] -     Substrate ID: None
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:182] - ======================================================================
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:183] - SUMMARY
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:184] - ======================================================================
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:185] - Total rows:  74
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:186] - Created:     74
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:187] - Skipped:     0
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:188] - Failed:      0
+2026-06-23 17:40:40 - __main__ - INFO - [main.py:189] - ======================================================================

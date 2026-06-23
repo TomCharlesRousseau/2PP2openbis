@@ -109,6 +109,18 @@ class Settings:
         """Full openBIS collection path, e.g. ``/SPACE/PROJECT/COLLECTION``."""
         return f"{self.project_path}/{self.collection}"
 
+    # ── Instrument / Printer ───────────────────────────────────────────────
+
+    @property
+    def printer_permid(self) -> str:
+        """Instrument (printer) permId – default parent for all experimental steps."""
+        value = self.get("printer.permid")
+        if not value:
+            raise ValueError(
+                "'printer.permid' is required in config/settings.json"
+            )
+        return value
+
     # ── Excel ──────────────────────────────────────────────────────────────
 
     @property
