@@ -19,6 +19,26 @@ parser.log
 # Credentials / local config (do not commit real settings)
 printjob2openbis/config/settings.json
 
+# Excel files: real protocol data and the v5 template (contain names, permIds, paths)
+*.xlsx
+printjob2openbis/2PP_print protocol.xlsx
+printjob2openbis/2PP_print_protocol_v5.xlsx
+printjob2openbis/new_2PP_print protocol.xlsx
+~$*
+!printjob2openbis/tests/fixtures/*.xlsx
+# Shareable example: header rows only (built by tools/make_example_workbook.py)
+!printjob2openbis/example.xlsx
+
+# Upload reports (code -> permId CSV)
+reports/
+*.csv
+
+# Private helper scripts (template generator contains real Lists data)
+printjob2openbis/private/
+
 # OS
 .DS_Store
 Thumbs.db
+
+# Femtika output example (real run data, device settings)
+printjob2openbis/Femtika output example/
