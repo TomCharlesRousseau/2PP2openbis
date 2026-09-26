@@ -1,227 +1,174 @@
 """
-Main orchestrator for printjob2openbis.
-
-Reads the print-job Excel spreadsheet and creates one EXPERIMENTAL_STEP
-object per print job in openBIS, validating parents and skipping
-duplicates.
+printjob2openbis command line.
 
 Usage::
 
-    python main.py [--excel PATH] [--dry-run]
+    python main.py check [--offline] [--excel PATH]
+    python main.py upload [--dry-run] [--update] [--excel PATH]
+
+``check`` validates the 2PP print protocol and writes nothing. Online (the
+default) it also logs in and verifies that every referenced permId exists.
+``upload`` runs the online check first, then creates the objects: print steps,
+printed samples, washing / CPD / sintering runs, sintered samples, imaging steps.
+``--dry-run`` reads openBIS but writes nothing.
 """
 
 import argparse
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, List, Optional
 
+import requests
+
+from checks.checker import check_protocol, sorted_issues
+from checks.issues import CheckResult
 from config.settings import Settings
-from excel.excel_parser import ExcelParser
-from excel.description_builder import build_description
-from models.printjob import PrintJob
-from openbis.connection import OpenBISConnection
-from openbis.object_manager import ObjectManager
+from excel.excel_reader import ProtocolData, read_protocol
 from utils.logger import get_logger
-from utils.validators import is_valid_perm_id
 
 logger = get_logger(__name__)
 
+_PACKAGE_DIR = Path(__file__).parent
 
-class PrintJobParser:
-    """Orchestrates Excel parsing and openBIS object creation."""
-
-    def __init__(self, excel_file: Optional[Path] = None) -> None:
-        """
-        Initialise the parser.
-
-        Args:
-            excel_file: Path to the Excel file. Falls back to the value
-                from ``config/settings.json`` when not supplied.
-        """
-        self._cfg = Settings()
-        self.excel_file = Path(excel_file) if excel_file else Path(self._cfg.excel_file_path)
-        self.excel_parser = ExcelParser(self.excel_file)
-        self.conn = OpenBISConnection()
-        self.object_manager: Optional[ObjectManager] = None
-
-        # Run statistics
-        self.total = 0
-        self.created = 0
-        self.skipped = 0
-        self.failed = 0
-
-    def run(self, dry_run: bool = False) -> bool:
-        """
-        Execute the full import workflow.
-
-        For each row in the spreadsheet the method:
-        1. Checks whether the code already exists → skip with INFO.
-        2. Validates Resin ID and Substrate ID via ``object_exists()``
-           → skip with ERROR if a parent is missing.
-        3. Builds a description and creates the ``EXPERIMENTAL_STEP``.
-
-        Args:
-            dry_run: When ``True``, parse and validate but do not write to
-                openBIS.
-
-        Returns:
-            ``True`` if the run completed without a fatal error.
-        """
-        logger.info("=" * 70)
-        logger.info("printjob2openbis starting")
-        logger.info("=" * 70)
-
-        try:
-            if not dry_run:
-                logger.info("Connecting to openBIS...")
-                openbis = self.conn.connect()
-                if openbis is None:
-                    logger.error("Failed to connect to openBIS")
-                    return False
-                self.object_manager = ObjectManager(openbis)
-                logger.info("Connected to openBIS")
-            else:
-                logger.info("[DRY RUN] Skipping openBIS connection")
-
-            jobs = self.excel_parser.parse()
-
-            if not jobs:
-                logger.info("No print jobs found in spreadsheet")
-                return True
-
-            logger.info(f"Processing {len(jobs)} print job(s)...")
-
-            for job in jobs:
-                self.total += 1
-                status = self._process_job(job, dry_run)
-                if status == "created":
-                    self.created += 1
-                elif status == "skipped":
-                    self.skipped += 1
-                else:
-                    self.failed += 1
-
-            self._log_summary()
-            return True
-
-        except Exception as exc:
-            logger.error(f"Fatal error: {exc}", exc_info=True)
-            return False
-
-        finally:
-            if not dry_run:
-                self.conn.disconnect()
-
-    def _process_job(self, job: PrintJob, dry_run: bool) -> str:
-        """
-        Process a single print job.
-
-        Args:
-            job: PrintJob instance to process.
-            dry_run: Skip actual object creation when ``True``.
-
-        Returns:
-            ``"created"``, ``"skipped"``, or ``"failed"``.
-        """
-        code = job.code
-        logger.info(f"Processing: {code} ({job.name})")
-
-        # ── Duplicate detection ────────────────────────────────────────────
-        if not dry_run and self.object_manager is not None:
-            if self.object_manager.object_exists(code):
-                logger.info(f"EXPERIMENTAL_STEP {code} already exists. Skipping.")
-                return "skipped"
-
-        # ── Parent validation ──────────────────────────────────────────────
-        if not dry_run and self.object_manager is not None:
-            for parent_label, parent_id in [
-                ("Resin ID", job.resin_id),
-                ("Substrate ID", job.substrate_id),
-            ]:
-                if not is_valid_perm_id(parent_id):
-                    logger.error(
-                        f"Row '{code}': {parent_label} is empty or missing – skipping"
-                    )
-                    return "skipped"
-
-                if not self.object_manager.object_exists(parent_id):
-                    logger.error(
-                        f"Row '{code}': {parent_label} '{parent_id}' does not exist "
-                        f"in openBIS – skipping"
-                    )
-                    return "failed"
-
-        # ── Dry-run output ─────────────────────────────────────────────────
-        if dry_run:
-            logger.info(f"  [DRY RUN] Would create EXPERIMENTAL_STEP '{code}'")
-            logger.info(f"    Name:        {job.name}")
-            logger.info(f"    Resin ID:    {job.resin_id}")
-            logger.info(f"    Substrate ID: {job.substrate_id}")
-            return "created"
-
-        # ── Object creation ────────────────────────────────────────────────
-        description = build_description(job)
-        perm_id = self.object_manager.create_experimental_step(
-            name=job.name,
-            code=code,
-            parents=job.parent_ids(),
-            description=description,
-            print_date=job.print_date,
-        )
-
-        if perm_id is None:
-            logger.error(f"Failed to create EXPERIMENTAL_STEP '{code}'")
-            return "failed"
-
-        logger.info(f"Created EXPERIMENTAL_STEP '{code}' (permId: {perm_id})")
-        return "created"
-
-    def _log_summary(self) -> None:
-        """Print a summary of the run."""
-        logger.info("=" * 70)
-        logger.info("SUMMARY")
-        logger.info("=" * 70)
-        logger.info(f"Total rows:  {self.total}")
-        logger.info(f"Created:     {self.created}")
-        logger.info(f"Skipped:     {self.skipped}")
-        logger.info(f"Failed:      {self.failed}")
-        logger.info("=" * 70)
+#: Collection groups the upload writes to.
+UPLOAD_GROUPS = ("printjobs", "samples", "washing", "cpd", "sintering", "imaging")
 
 
-def _parse_args() -> argparse.Namespace:
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Parse print-job Excel spreadsheet and upload to openBIS."
-    )
-    parser.add_argument(
-        "--excel",
-        metavar="PATH",
-        help="Path to the Excel file (overrides config/settings.json)",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Parse and validate without writing to openBIS",
-    )
-    return parser.parse_args()
+def _package_path(value: str) -> Path:
+    """Path from settings; a relative path is relative to this package."""
+    path = Path(value)
+    return path if path.is_absolute() else _PACKAGE_DIR / path
 
 
-def main() -> None:
-    """Entry point."""
-    args = _parse_args()
-    excel_path = Path(args.excel) if args.excel else None
+def _excel_path(cfg: Settings, override: Optional[str]) -> Path:
+    """Excel file from ``--excel`` (relative to the current directory) or from settings."""
+    return Path(override) if override else _package_path(cfg.excel_file_path)
+
+
+def connect(cfg: Settings) -> Any:
+    """Log in to openBIS (keyring PAT, password prompt as fallback)."""
+    from openbis_utils.connection import connect_openbis
+
+    openbis, _, _ = connect_openbis(url=cfg.openbis_url, userid=cfg.openbis_username)
+    return openbis
+
+
+def run_check(cfg: Settings, data: ProtocolData, openbis: Optional[Any]) -> CheckResult:
+    """
+    Run all checks on *data*.
+
+    Args:
+        cfg: Settings (printer permId, bam_oe).
+        data: Workbook content.
+        openbis: Logged-in session, or None for an offline check (permIds and
+            bam_oe are then not checked in openBIS).
+
+    Returns:
+        The check result.
+    """
+    lookup = terms = None
+    if openbis is not None:
+        from openbis.lookup import existing_permids, vocabulary_terms
+
+        lookup = lambda permids: existing_permids(openbis, permids)  # noqa: E731
+        terms = lambda vocabulary: vocabulary_terms(openbis, vocabulary)  # noqa: E731
+    return check_protocol(data, printer_permid=cfg.printer_permid, permid_lookup=lookup,
+                          bam_oe=cfg.bam_oe, vocabulary_lookup=terms)
+
+
+def run_upload(cfg: Settings, data: ProtocolData, check: CheckResult, openbis: Any,
+               dry_run: bool, update: bool) -> int:
+    """
+    Upload *data* (check must not be fatal) and print the summary.
+
+    Returns:
+        Exit code: 0 if no upload error, else 1.
+    """
+    from openbis.object_manager import ObjectManager
+    from openbis.uploader import UploadConfig, Uploader, write_report
 
     try:
-        runner = PrintJobParser(excel_file=excel_path)
-        success = runner.run(dry_run=args.dry_run)
-        sys.exit(0 if success else 1)
+        collection_paths = {group: cfg.collection_path(group) for group in UPLOAD_GROUPS}
+    except ValueError as exc:  # collection not configured in settings.json
+        print(f"ERROR: {exc}")
+        return 1
+    config = UploadConfig(printer_permid=cfg.printer_permid, bam_oe=cfg.bam_oe,
+                          collection_paths=collection_paths)
+    manager = ObjectManager(openbis, cfg.openbis_space, cfg.project_name, dry_run=dry_run)
+    stats = Uploader(manager, config, data, check, update=update).run()
+    report = write_report(stats, _package_path(cfg.report_dir), dry_run)
+
+    print()
+    print("DRY-RUN (nothing written to openBIS)" if dry_run else "Upload finished")
+    print(f"  openBIS: {stats.summary(dry_run)}")
+    print(f"  Check:   {len(check.errors)} error(s), {len(check.warnings)} warning(s) "
+          f"(affected rows were skipped; see the list above).")
+    print(f"  Report:  {report}")
+    return 1 if stats.errors else 0
+
+
+def print_report(result: CheckResult, offline: bool) -> None:
+    """Print every issue and a summary line to stdout."""
+    for issue in sorted_issues(result.issues):
+        print(issue)
+    if result.issues:
+        print()
+    if result.fatal:
+        print("File-level ERROR: nothing can be uploaded until it is fixed.")
+    print(f"{len(result.errors)} error(s), {len(result.warnings)} warning(s).")
+    if offline:
+        print("Offline check: permIds and bam_oe were not verified in openBIS.")
+
+
+def _parse_args(argv: Optional[List[str]]) -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Check the 2PP print protocol and upload it to openBIS."
+    )
+    parser.add_argument("--excel", metavar="PATH",
+                        help="Excel file (default: excel.file_path in config/settings.json)")
+    commands = parser.add_subparsers(dest="command", required=True)
+
+    check = commands.add_parser("check", help="Validate the Excel file; writes nothing.")
+    check.add_argument("--offline", action="store_true",
+                       help="Do not log in: Excel and Lists checks only.")
+
+    upload = commands.add_parser("upload", help="Check, then create the objects in openBIS.")
+    upload.add_argument("--dry-run", action="store_true",
+                        help="Log what would be created / linked / updated; write nothing.")
+    upload.add_argument("--update", action="store_true",
+                        help="Also overwrite properties of existing objects from the Excel.")
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    """Entry point; returns the process exit code (0 = no errors)."""
+    args = _parse_args(argv)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")  # Windows console: never fail on a character
+    cfg = Settings()
+    excel = _excel_path(cfg, args.excel)
+    offline = getattr(args, "offline", False)
+
+    try:
+        data = read_protocol(excel)
+        openbis = None if offline else connect(cfg)
+        result = run_check(cfg, data, openbis)
+        print_report(result, offline=offline)
+        if args.command == "check":
+            return 1 if result.errors else 0
+
+        if result.fatal:
+            print("Upload stopped.")
+            return 1
+        return run_upload(cfg, data, result, openbis, dry_run=args.dry_run, update=args.update)
     except FileNotFoundError as exc:
-        logger.error(str(exc))
-        sys.exit(1)
-    except Exception as exc:
-        logger.error(f"Fatal error: {exc}", exc_info=True)
-        sys.exit(1)
+        print(f"ERROR: {exc}")
+        return 1
+    except requests.ConnectionError as exc:
+        print(f"ERROR: {exc} Run 'check --offline' to check the Excel file only.")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

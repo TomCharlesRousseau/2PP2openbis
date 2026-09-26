@@ -3,6 +3,50 @@
 ## Overview
 Python project to parse an Excel spreadsheet and create one openBIS object of type `EXPERIMENTAL_STEP` for each printjob.
 
+## Terminology
+- **Substrate** = UV-Sheet (use "Substrate" consistently in code and comments)
+
+## Features
+
+### Feature 1 — Default Parent Object (Instrument) for Every Experimental Step
+The instrument permId is stored in settings.json under:
+```json
+{
+  "printer": {
+    "permid": "20250804114731151-12961"
+  }
+}
+```
+
+When creating any experimental step object in OpenBIS, always automatically assign this permId as a parent object, loaded from `settings["printer"]["permid"]`. This must happen on every experimental step creation — no user input required.
+
+### Feature 2 — Sample Deduplication per Substrate
+Every experimental step generates exactly one sample. If two or more experimental steps share the same Substrate (UV-Sheet) as parent, they must all reference the same single sample — do not create duplicate samples.
+
+**Constraint**: number of samples created ≤ number of experimental steps
+
+When multiple experimental steps share a Substrate, assign the sample number of the lowest-numbered experimental step among them.
+
+**Sample naming convention:**
+- Code: `PRINTED_<N>`
+- Name: `Printed_<N>`
+
+Where `<N>` is the incrementing number of the Substrate (UV-Sheet) — All experimental steps sharing the same Substrate produce a sample with the same `<N>`.
+
+### Feature 3 — Substrate as Parent of the Sample
+When creating a sample, assign the Substrate (UV-Sheet) as its parent object in OpenBIS.
+
+### Summary of Object Relationships
+```
+Instrument (permId: 20250804114731151-12961)
+    ├── Experimental Step 1  (parent: Instrument)
+    │       └── Sample: PRINTED_1 / Printed_1  (parent: Substrate A)
+    ├── Experimental Step 2  (parent: Instrument)
+    │       └── Sample: PRINTED_1 / Printed_1  ← same sample! (same Substrate A)
+    └── Experimental Step 3  (parent: Instrument)
+            └── Sample: PRINTED_3 / Printed_3  (parent: Substrate B)
+```
+
 ## Reference Project
 - **uvsheet2openbis** - Use as reference
 - Reuse/copy from:
@@ -40,7 +84,7 @@ printjob2openbis/
 ### Columns (A-AC)
 | Col | Header | Usage | Notes |
 |-----|--------|-------|-------|
-| A | Printjob Name # | object name | |
+| A | Print # | object name | |
 | B | Code | object code | |
 | C | Print date | description | already formatted |
 | D | Responsible person | description | |
@@ -72,7 +116,7 @@ printjob2openbis/
 
 ## Object Creation
 - **Type**: EXPERIMENTAL_STEP
-- **Name**: Printjob Name # (Column A)
+- **Name**: Print # (Column A)
 - **Code**: Code (Column B)
 - **Parents**: Resin ID (H), Substrate ID (J)
 
