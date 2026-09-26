@@ -1,12 +1,29 @@
 {
+  "version": "0.0.0",
   "openbis": {
     "api_url": "https://your-openbis-instance/",
     "username": "your_username",
     "space": "YOUR_SPACE",
-    "project_name": "YOUR_PROJECT",
-    "collection": "PRINTJOB_EXP_STEP"
+    "project": "YOUR_PROJECT"
+  },
+  "collections": {
+    "printjobs": "YOUR_PRINTJOB_COLLECTION",
+    "samples": "YOUR_SAMPLE_COLLECTION",
+    "washing": "YOUR_WASHING_COLLECTION",
+    "cpd": "YOUR_CPD_COLLECTION",
+    "sintering": "YOUR_SINTERING_COLLECTION",
+    "imaging": "YOUR_IMAGING_COLLECTION"
+  },
+  "printer": {
+    "permid": "20210101000000000-12345"
+  },
+  "properties": {
+    "bam_oe": "YOUR_OE"
   },
   "excel": {
-    "file_path": "printjobs.xlsx"
+    "file_path": "2PP_print_protocol_v5.xlsx"
+  },
+  "output": {
+    "report_dir": "reports"
   }
 }

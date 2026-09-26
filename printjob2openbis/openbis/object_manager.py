@@ -1,237 +1,207 @@
 """
-openBIS object creation and validation manager for printjob2openbis.
+Find, create and link openBIS objects.
 
-Handles:
-- Checking whether an object (identified by code or permId) already exists.
-- Creating EXPERIMENTAL_STEP objects for print jobs.
-- Sample deduplication per Substrate with automatic parent assignment.
+All reads and writes of the uploader go through :class:`ObjectManager`. In
+dry-run mode it still reads (to know what exists) but never writes: a create
+returns a placeholder permId and a link is only logged.
+
+Objects are identified by ``/SPACE/PROJECT/CODE``.
 """
 
-from typing import Dict, List, Optional
+from dataclasses import dataclass, field
+import re
+from typing import Dict, Iterable, List, Optional, Set
 
-from config.settings import Settings
+from pybis import Openbis
+
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+_BATCH_SIZE = 100
+
+#: Prefix of placeholder permIds handed out in dry-run mode.
+DRY_RUN_PREFIX = "(new) "
+
+#: Timezone suffix openBIS appends to stored TIMESTAMP values, e.g. `` +0100``.
+_TIMEZONE_SUFFIX = re.compile(r"\s[+-]\d{4}$")
+
+
+def _normalise(value: Optional[str]) -> Optional[str]:
+    """Stored property value comparable with a value we would write."""
+    if value is None or value == "":
+        return None
+    return _TIMEZONE_SUFFIX.sub("", str(value))
+
+
+@dataclass
+class ExistingObject:
+    """An object found in openBIS."""
+
+    code: str
+    permid: str
+    type_code: str
+    parent_permids: Set[str] = field(default_factory=set)
+    properties: Dict[str, str] = field(default_factory=dict)  # UPPERCASE code → stored value
+
+    def changed_properties(self, wanted: Dict[str, Optional[str]]) -> Dict[str, str]:
+        """
+        Properties of *wanted* whose stored value differs.
+
+        ``None`` (empty Excel cell) never clears a stored value, so it is not a change.
+        Stored TIMESTAMP values carry a timezone suffix, which is ignored.
+        """
+        return {
+            code: value
+            for code, value in wanted.items()
+            if value is not None
+            and _normalise(self.properties.get(code.upper())) != _normalise(value)
+        }
+
+
+@dataclass
+class NewObject:
+    """
+    An object to create.
+
+    Attributes:
+        type_code: openBIS object type, e.g. ``EXPERIMENTAL_STEP``.
+        code: Object code (uppercase).
+        collection_path: ``/SPACE/PROJECT/COLLECTION``.
+        properties: Property code → value; ``None`` values are not set.
+        parents: Parent permIds.
+    """
+
+    type_code: str
+    code: str
+    collection_path: str
+    properties: Dict[str, Optional[str]]
+    parents: List[str]
+
 
 class ObjectManager:
-    """Manage creation and validation of openBIS print-job objects."""
+    """Read / write gateway to openBIS for one project."""
 
-    def __init__(self, openbis) -> None:
+    def __init__(self, openbis: Openbis, space: str, project: str, dry_run: bool) -> None:
         """
-        Initialise the manager.
-
         Args:
-            openbis: Connected ``pybis.Openbis`` instance.
+            openbis: Logged-in pybis session.
+            space: Space code from settings.
+            project: Project code from settings.
+            dry_run: If True, never write.
         """
         self.openbis = openbis
-        self._cfg = Settings()
-        self.collection_path = self._cfg.collection_path
-        
-        # Feature 1: Default instrument parent
-        self.instrument_permid: str = self._cfg.printer_permid
-        logger.debug(f"Instrument permId: {self.instrument_permid}")
-        
-        # Feature 2: Track samples per substrate for deduplication
-        # Maps substrate_id -> (sample_number, sample_permId)
-        self._substrate_to_sample: Dict[str, tuple] = {}
-        self._next_sample_number = 1
+        self.space = space
+        self.project = project
+        self.dry_run = dry_run
 
-    # ── Existence checks ───────────────────────────────────────────────────
+    def identifier(self, code: str) -> str:
+        """``/SPACE/PROJECT/CODE`` of an object in the configured project."""
+        return f"/{self.space}/{self.project}/{code}"
 
-    def object_exists(self, identifier: str) -> bool:
+    # ── Reads ───────────────────────────────────────────────────────────────
+
+    def missing_collections(self, collection_paths: Iterable[str]) -> List[str]:
+        """Return the collection paths that do not exist in openBIS."""
+        missing = []
+        for path in sorted(set(collection_paths)):
+            try:
+                self.openbis.get_collection(path)
+            except ValueError:
+                missing.append(path)
+        return missing
+
+    def find_existing(self, codes: Iterable[str]) -> Dict[str, ExistingObject]:
         """
-        Check whether an openBIS object exists.
-
-        The *identifier* may be:
-        - An object **code** (e.g. ``"PJ001"``): searched inside the
-          configured print-job collection.
-        - An object **permId** (e.g. ``"20210101000000000-12345"``): looked
-          up directly via ``get_sample``.
+        Look up objects by code in the configured project (batched).
 
         Args:
-            identifier: Object code or permId.
+            codes: Object codes.
 
         Returns:
-            ``True`` if the object exists, ``False`` otherwise.
+            Code → :class:`ExistingObject` for the codes that exist.
         """
-        # 1. Try direct permId / path lookup (works for any object type).
-        try:
-            result = self.openbis.get_sample(identifier)
-            if result is not None:
-                logger.debug(f"Object '{identifier}' found via direct lookup")
-                return True
-        except Exception:
-            pass
-
-        # 2. Fall back to code-based search within the print-job collection.
-        try:
-            results = self.openbis.get_samples(
-                code=identifier, collection=self.collection_path
-            )
-            if len(results) > 0:
-                logger.debug(
-                    f"Object '{identifier}' found by code in {self.collection_path}"
+        wanted = sorted(set(codes))
+        found: Dict[str, ExistingObject] = {}
+        for start in range(0, len(wanted), _BATCH_SIZE):
+            batch = [self.identifier(code) for code in wanted[start:start + _BATCH_SIZE]]
+            response = self.openbis.get_sample(batch, raw_response=True)
+            for data in response.values():
+                obj = ExistingObject(
+                    code=data["code"],
+                    permid=data["permId"]["permId"],
+                    type_code=data["type"]["code"],
+                    parent_permids={p["permId"]["permId"] for p in data.get("parents") or []},
+                    properties={k.upper(): v for k, v in (data.get("properties") or {}).items()},
                 )
-                return True
-        except Exception as exc:
-            logger.error(f"Error checking existence of '{identifier}': {exc}")
+                found[obj.code] = obj
+        return found
 
-        return False
+    # ── Writes ──────────────────────────────────────────────────────────────
 
-    # ── Sample creation with deduplication ─────────────────────────────────
-
-    def create_or_get_sample(self, substrate_id: str) -> Optional[tuple]:
+    def create(self, new: NewObject) -> str:
         """
-        Create or retrieve a deduplicated sample for a substrate.
+        Create *new* and return its permId (a placeholder in dry-run mode).
 
-        Feature 2: If a sample already exists for this substrate,
-        return its details. Otherwise, create a new sample.
+        Raises:
+            KeyError: Unknown property code (programming error, never caught).
+            ValueError: openBIS rejected the object.
+        """
+        if self.dry_run:
+            logger.info(f"DRY-RUN: would create {new.type_code} {new.code} in "
+                        f"{new.collection_path} with parents {new.parents}")
+            return f"{DRY_RUN_PREFIX}{new.code}"
 
-        Feature 3: The sample's parent is always the substrate.
+        obj = self.openbis.new_sample(
+            type=new.type_code,
+            code=new.code,
+            collection=new.collection_path,
+            parents=new.parents,
+        )
+        for code, value in new.properties.items():
+            if value is not None:
+                obj.p[code] = value
+        obj.save()
+        logger.info(f"Created {new.type_code} {new.code} ({obj.permId})")
+        return obj.permId
 
-        Args:
-            substrate_id: The permId of the substrate (UV-Sheet).
+    def add_parents(self, existing: ExistingObject, parent_permids: Iterable[str]) -> List[str]:
+        """
+        Add the parents of *parent_permids* that *existing* does not have yet.
+
+        Existing parents are never removed.
 
         Returns:
-            Tuple of (sample_code, sample_permId) or None if creation failed.
-            Example: ("PRINTED_1", "20210101000000000-54321")
+            The permIds that were (or, in dry-run, would be) added.
         """
-        # Check if we've already created a sample for this substrate
-        if substrate_id in self._substrate_to_sample:
-            sample_number, sample_permid = self._substrate_to_sample[substrate_id]
-            logger.debug(
-                f"Substrate '{substrate_id}' already mapped to sample "
-                f"PRINTED_{sample_number} (permId: {sample_permid})"
-            )
-            return (f"PRINTED_{sample_number}", sample_permid)
+        missing = [p for p in parent_permids if p not in existing.parent_permids]
+        if not missing:
+            return []
+        if self.dry_run:
+            logger.info(f"DRY-RUN: would add parents {missing} to {existing.type_code} {existing.code}")
+            return missing
+        sample = self.openbis.get_sample(existing.permid)
+        sample.add_parents(missing)
+        sample.save()
+        existing.parent_permids.update(missing)
+        logger.info(f"Added parents {missing} to {existing.type_code} {existing.code}")
+        return missing
 
-        # Create a new sample for this substrate
-        sample_number = self._next_sample_number
-        sample_code = f"PRINTED_{sample_number}"
-        sample_name = f"Printed_{sample_number}"
-
-        try:
-            obj = self.openbis.new_sample(
-                type="EXPERIMENTAL_STEP",  # Assuming samples are also EXPERIMENTAL_STEP type
-                code=sample_code,
-                collection=self.collection_path,
-            )
-
-            # Set object name
-            obj.p["$name"] = sample_name
-
-            # Feature 3: Set substrate as parent
-            obj.parents = [substrate_id]
-            logger.debug(f"Set substrate '{substrate_id}' as parent for sample '{sample_code}'")
-
-            obj.save()
-            logger.info(f"Created sample: {sample_code} (name: {sample_name})")
-
-            # Retrieve permId of the newly created sample
-            created = self.openbis.get_sample(f"{self.collection_path}/{sample_code}")
-            sample_permid: str = created.permId
-            logger.debug(f"Sample permId: {sample_permid}")
-
-            # Track this substrate -> sample mapping
-            self._substrate_to_sample[substrate_id] = (sample_number, sample_permid)
-            self._next_sample_number += 1
-
-            return (sample_code, sample_permid)
-
-        except Exception as exc:
-            logger.error(f"Error creating sample for substrate '{substrate_id}': {exc}")
-            return None
-
-    # ── Object creation ────────────────────────────────────────────────────
-
-    def create_experimental_step(
-        self,
-        name: str,
-        code: str,
-        parents: List[str],
-        description: str,
-        substrate_id: Optional[str] = None,
-        print_date: Optional[str] = None,
-    ) -> Optional[str]:
+    def update_properties(self, existing: ExistingObject, properties: Dict[str, str]) -> None:
         """
-        Create an ``EXPERIMENTAL_STEP`` object for a print job.
+        Overwrite *properties* (code → new value) of *existing*.
 
-        Feature 1: Always adds the instrument as the first parent.
-        Feature 2 & 3: Creates or retrieves a deduplicated sample for the substrate.
-
-        Args:
-            name: Human-readable object name (Print #).
-            code: Unique object code.
-            parents: List of parent permIds (Resin ID, Substrate ID).
-            description: Formatted description text.
-            substrate_id: The substrate permId for sample deduplication (Feature 2 & 3).
-            print_date: Optional print date string.
-
-        Returns:
-            permId of the created object, or ``None`` if creation failed.
+        Raises:
+            KeyError: Unknown property code (programming error, never caught).
+            ValueError: openBIS rejected the change.
         """
-        try:
-            # Feature 1: Always add instrument as first parent
-            all_parents = [self.instrument_permid] + parents
-            logger.debug(
-                f"Creating EXPERIMENTAL_STEP with parents: "
-                f"[{self.instrument_permid} (instrument)] + {parents}"
-            )
-
-            obj = self.openbis.new_sample(
-                type="EXPERIMENTAL_STEP",
-                code=code,
-                collection=self.collection_path,
-            )
-
-            # Set object name
-            obj.p["$name"] = name
-
-            # Set description
-            if description:
-                try:
-                    obj.p["experimental_step.experimental_description"] = description
-                except Exception:
-                    try:
-                        obj.p["description"] = description
-                    except Exception as exc:
-                        logger.debug(f"Could not set description property: {exc}")
-
-            # Set print date if provided
-            if print_date:
-                try:
-                    obj.p["print_date"] = print_date
-                except Exception as exc:
-                    logger.debug(f"Could not set print_date property: {exc}")
-
-            # Link parent objects (including instrument)
-            if all_parents:
-                obj.parents = all_parents
-                logger.debug(f"Set {len(all_parents)} parent(s) for {code}")
-
-            # Feature 2 & 3: Create/retrieve deduplicated sample
-            sample_permid = None
-            if substrate_id:
-                sample_result = self.create_or_get_sample(substrate_id)
-                if sample_result:
-                    sample_code, sample_permid = sample_result
-                    logger.debug(
-                        f"Linked experimental step '{code}' to sample '{sample_code}'"
-                    )
-                else:
-                    logger.warning(f"Could not create/retrieve sample for substrate '{substrate_id}'")
-
-            obj.save()
-            logger.info(f"Created EXPERIMENTAL_STEP: {code}")
-
-            # Retrieve permId of the newly created object
-            created = self.openbis.get_sample(f"{self.collection_path}/{code}")
-            perm_id: str = created.permId
-            logger.debug(f"Object permId: {perm_id}")
-            return perm_id
-
-        except Exception as exc:
-            logger.error(f"Error creating EXPERIMENTAL_STEP '{code}': {exc}")
-            return None
+        codes = ", ".join(properties)
+        if self.dry_run:
+            logger.info(f"DRY-RUN: would update {existing.type_code} {existing.code}: {codes}")
+            return
+        sample = self.openbis.get_sample(existing.permid)
+        for code, value in properties.items():
+            sample.p[code] = value
+        sample.save()
+        existing.properties.update({code.upper(): value for code, value in properties.items()})
+        logger.info(f"Updated {existing.type_code} {existing.code}: {codes}")
