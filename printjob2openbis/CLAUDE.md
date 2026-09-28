@@ -159,7 +159,7 @@ printjob2openbis/
 
 ## Next Steps
 
-### Next Step 1: 3DPoli Job File as Attachment on a SAMPLE Object
+### Next Step 1: 3DPoli Job File as Dataset on a SAMPLE Object
 The PrintJobs column **3DPoli job file** holds the path of the 3DPoli job `.txt`
 (the script run on the Femtika printer, stored on the network share under
 `2PP/Experimente chronologisch/`). Today the path only appears in the print step description.
@@ -167,15 +167,27 @@ The PrintJobs column **3DPoli job file** holds the path of the 3DPoli job `.txt`
 For each distinct job file:
 - Create one openBIS object of type `SAMPLE` in the 3DPoli collection
   (new key `collections.poli` in settings.json: the `3DPOLI` collection of the 2PP project).
-- Attach the `.txt` file to that object as an **attachment** (not a dataset).
+- Upload the `.txt` file as a **dataset** of type `RAW_DATA` linked to that object (not an
+  attachment: datasets are the BAM Data Store standard and the only option of the later
+  bam-masterdata parser, see the last section).
 - `bam_oe` is mandatory on `SAMPLE`.
 - Deduplicate: several prints using the same job file share one object.
 - Dry mode and update mode apply as for the other objects.
 
-Open questions (decide before implementing):
-- Code / name convention of the 3DPoli object (e.g. from the job file name).
-- Relationship to the print: 3DPoli object as parent of the print step?
-- Update mode: replace the attachment if the file content changed?
+Decisions:
+- **Code from the file name**: `2PP_POLI_<file name without .txt>`, uppercased, spaces → `_`,
+  characters outside `A-Z 0-9 _ - .` removed (umlauts transliterated: Ä → AE …).
+  Example: `20260303_Array mit Text Logo und QR Code-fix2.txt`
+  → `2PP_POLI_20260303_ARRAY_MIT_TEXT_LOGO_UND_QR_CODE-FIX2`.
+  `$name` = the original file name. Renaming the file creates a new object (accepted).
+- **Parent of the print step**: Printer + Resin + Substrate + 3DPoli job → Print step.
+  The job object is therefore created *before* the print steps.
+
+- **Changed job file**: compared by **content**, not by name or date (details in Step 3).
+  - Same content as a dataset already on the object → nothing uploaded (no duplicates).
+  - Different content, default mode → WARNING `job file changed since upload; run with --update`, nothing uploaded.
+  - Different content, `--update` → WARNING `job file changed, uploading a new dataset`, new dataset
+    uploaded; the old dataset is kept (history of the job file).
 
 ### Next Step 2: Auto-fill the Excel Sheet from the Femtika Output Folder
 Fill PrintJobs columns automatically instead of by hand, by reading the folder given in
@@ -216,16 +228,119 @@ Each print run creates one folder `<job name>_<YYYYMMDD>_<HHMMSS>/` in the
 #### Rules
 - Only fill empty cells; if a filled cell differs from the file value, log a WARNING and keep the cell.
 - Never write formula (grey) columns.
-- openpyxl drops cached formula values on save and the parser reads those caches:
-  write to a copy or let Excel recalculate before parsing (decide the approach).
 - Do not copy NAS credentials or local user paths from `3DPoliFabrication.ini` anywhere.
 
-#### Open questions
-- Separate command (e.g. `python main.py fill`) or automatic during `check` / `upload`?
-- Which rows to fill: all rows with a Femtika output folder, or only rows not yet uploaded?
+Decision: **separate command** `python main.py fill`. It writes the values into the Excel file;
+the user opens it in Excel, checks the values, saves (Excel recalculates the formula caches
+that openpyxl drops), then runs `check` / `upload`. `check` / `upload` never read the Femtika folder.
 
-### Implementation Order (Next Steps)
-- [ ] Step 1: Femtika output folder reader (`femtika/` module) + unit tests on the example folder
-- [ ] Step 2: Excel auto-fill of printer settings / geometry from the reader
-- [ ] Step 3: 3DPoli SAMPLE object creation in the 3DPOLI collection
-- [ ] Step 4: Job file attachment + deduplication per job file
+- Rows to fill: all rows with a Femtika output folder
+
+## Implementation Plan (Next Steps)
+Order decided: 3DPoli job file first (Steps 1–3), then Femtika auto-fill (Steps 4–6).
+Each step ends with all tests passing and is committed separately.
+
+### Step 1: 3DPoli job model and checks
+- `models/printjob.py`: `PrintJob.poli_job_code` property (code from the file name, rule above)
+  in a helper `poli_code_from_filename(name) -> str`, next to the other code properties.
+- `checks/checker.py`, when **3DPoli job file** is filled (the column stays optional):
+  - file name ends in `.txt`, derived code valid (`CODE_PATTERN`) → else ERROR, print blocked (Stage.PRINT);
+  - file exists and is readable → else ERROR, print blocked (the job is a parent of the print step);
+  - two different paths giving the same code (same file name in two folders) → ERROR on both rows.
+- Tests: `tests/test_models.py` (code rule, umlauts, spaces, example above),
+  `tests/test_checker.py` (each new ERROR, empty column = no issue). Use `tmp_path` files, not the share.
+
+### Step 2: 3DPoli object creation + parent link
+- `config/settings.py`: `"poli"` added to `COLLECTION_GROUPS`; `main.UPLOAD_GROUPS` too;
+  `settings.json.example` gets `collections.poli`.
+- `openbis/object_builders.py`: `poli_job(job, collection_path, bam_oe) -> NewObject`
+  (type `SAMPLE`, `$name` = file name, `bam_oe`, `description` = job file path + footer).
+- `openbis/uploader.py`:
+  - new level `_upload_poli_jobs` run **before** `_upload_print_steps`, one object per distinct code
+    (deduplicated like runs); a failure blocks every print using that job (Stage.PRINT);
+  - `print_step` parents gain the job permId when the column is filled;
+    existing print steps get the link through the existing `add_parents` logic.
+  - `_candidate_codes` includes the job codes.
+- Tests: `tests/test_uploader.py` with the fake manager: one object for two prints sharing a file,
+  print step parents include the job, failed job blocks its prints, dry-run writes nothing.
+
+### Step 3: Job file dataset
+- `NewObject` gets `dataset_files: List[Path]` (default empty); `poli_job` sets it to the job file.
+- `ObjectManager.upload_dataset(permid, files)`: after the object exists,
+  `openbis.new_dataset(type="RAW_DATA", sample=<object>, files=[...]).save()`.
+  Dry-run logs `would upload dataset <file name>`. Verify that `RAW_DATA` exists on the instance.
+- Existing job object: list the files of **all** its datasets and compare with the local file:
+  1. **Checksum from openBIS, no download**: openBIS stores size and a checksum (CRC32, on newer
+     versions also SHA-256) for every dataset file; pybis lists them with the dataset's files
+     (`get_files()` / file list — verify column names on the installed version). Compute the same
+     checksum locally (`zlib.crc32` / `hashlib.sha256`) and compare together with the file size.
+  2. **Fallback if no checksum is available**: download the file of each dataset with the same
+     file name to a temp folder and compare bytes (job files are small `.txt`).
+  - Match with any dataset (also an older one) → skip. No dataset → upload (covers an earlier run
+    where the object was created but the upload failed). No match → rules of "Changed job file" above.
+- A failed dataset upload: ERROR in the log and report, the object and the prints stay valid
+  (the print step link does not depend on the file).
+- Report status shows the dataset (`created + dataset`).
+- Tests: fake manager records dataset uploads (new object; existing object with no dataset,
+  same content, changed content with and without `--update`; dry-run); one manual test upload in a test collection
+  (ask the user which project / collection before writing to openBIS).
+
+### Step 4: Femtika output folder reader
+- New package `femtika/`: `reader.py` with a `FemtikaRun` dataclass (typed fields for every value
+  in the column mapping, `None` if a file / key is missing) and `read_run_folder(path) -> FemtikaRun`.
+  Reads only `timing.json`, `structure.json`, `calibration.json`, `Script.txt` (first 2 lines),
+  `3DPoliFabrication.ini` (only the `Sample …` keys). JSON files start with a UTF-8 BOM: open with `utf-8-sig`.
+- A missing or unreadable file → WARNING and the fields stay `None`; never an exception for one run.
+- Tests: small **synthetic** fixture folder `tests/fixtures/femtika_run/` (made-up values;
+  the real example folder is git-ignored and must not be copied into tests).
+
+### Step 5: Column mapping + `fill` command
+- `femtika/fill.py`: `FILL_MAP` (PrintJobs field → function of `FemtikaRun`), only the rows of the
+  confirmed mapping table; `fill_workbook(excel_path, dry_run) -> FillReport`.
+- Writes with openpyxl by header name (reuse `column_mapping`), only empty non-formula cells;
+  differing filled cells → WARNING, kept.
+- Before writing: refuse if the file is open in Excel (`~$` lock file), save a backup copy
+  `<name>_backup_<timestamp>.xlsx`. Check first on a copy of the template that an openpyxl
+  round-trip keeps data validation, comments, colours and formulas.
+- `main.py`: subcommand `fill [--dry-run] [--excel PATH]`; prints per row what was / would be filled,
+  and reminds the user to open and save the file in Excel.
+- The **Femtika output folder** cell: full path, or folder name relative to a new setting
+  `femtika.logs_dir` (to decide).
+- Tests: build a workbook with `tests/workbook_builder.py`, run `fill` against the fixture folder,
+  re-read the cells; filled cells untouched; formula columns untouched.
+
+### Step 6: Link the two features
+- `fill` also fills **3DPoli job file** from `Script.txt` `Source:` once the path mapping
+  printer PC → network share is known (setting, e.g. `femtika.job_path_map`).
+
+### Before starting Step 4 (information needed from the user)
+- Confirm the "to confirm" rows of the column mapping (laser power, scan speed, geometry: which stage, SC or SO).
+- Units of the geometry columns: absolute stage positions (e.g. z = 59764 µm) or relative to the start?
+- How Femtika output folder cells are filled today (example value, anonymised).
+- Printer-PC path → network path rule for the 3DPoli job file.
+
+## Later: bam-masterdata Parser for the openBIS Upload Helper
+Decision: **finish this CLI first**, exactly as designed. A second solution that follows
+`bam-masterdata` / `openbis-upload-helper` (BAMresearch on GitHub) is built later, so colleagues
+can keep using it with the BAM app. Do not restructure this project for it now.
+
+How that framework works (checked in the `bam-masterdata` source):
+- Parser class inherits `AbstractParser`, implements `parse(files, collection, logger)`;
+  new package from the `openbis-parser-example` template, registered by entry point, bundled in app releases.
+- The parser only builds objects (`ExperimentalStep`, `Sample` …) and relationships in memory;
+  the app logs in and writes. The parser gets **no openBIS session**: no lookups, no online checks.
+- Existing code → properties always updated (no skip, no dry-run). Missing parent → warning, link skipped.
+- Files: datasets only (`add_dataset`, type `RAW_DATA`), no attachments. The selected input files
+  are also uploaded as a dataset into the chosen collection.
+- Existing parents can be referenced as `{"permId": ...}` in `add_relationship`.
+
+Keep the later migration cheap while finishing this project:
+- Keep openBIS access only in `openbis/` (connection, object_manager, uploader, lookup);
+  reader, models, checks (offline part), descriptions and `object_builders` stay free of pybis.
+- Keep codes deterministic (`2PP_…`), as the framework finds existing objects by code.
+- Keep `fill` a separate command (a parser must not modify its input file).
+
+Planned shape of the later solution: a new parser repo holds the shared core (reader, models,
+offline checks, builders → masterdata objects); this CLI may then depend on it for its extras
+(online check, dry-run, skip / `--update`, CSV report, `fill`). Project settings (collections,
+printer permId, `bam_oe`) would move into the workbook (Settings / Lists sheet) instead of code.
