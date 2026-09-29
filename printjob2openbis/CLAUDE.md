@@ -213,20 +213,42 @@ Each print run creates one folder `<job name>_<YYYYMMDD>_<HHMMSS>/` in the
 | `Calibration.dat` | Binary calibration table: ignore |
 | `FC0.PGM` | Compiled program (~5 MB): ignore |
 
-#### Column mapping (proposal, to confirm)
-| PrintJobs column | Source |
-|------------------|--------|
-| Print date | `timing.json` → `start` |
-| Print duration [min] | `timing.json` → `duration_s / 60` |
-| Print status | `timing.json` → `aborted` = true suggests `Failed` / `Partial` (operator decides; never set `OK` automatically?) |
-| 3DPoli job file | `Script.txt` line 2 `Source:` (printer-PC path → map to network path?) |
-| Max laser power (calibration) [mW] | `calibration.json` → `max_power_mW` |
-| Laser power [mW] | `structure.json` → `ATT.SC_max_um.Z` / W axis in `structure.txt` (to confirm) |
-| Scan speed [mm/s] | `structure.json` → `ST2.vel_SC_max_umps / 1000` (to confirm) |
-| Tilt alpha [°] / Tilt beta [°] | `structure.json` → `tilt_alpha_deg` / `tilt_beta_deg` |
-| Tilt compensation | `3DPoliFabrication.ini` → `Sample enable TC` (1 = yes) |
-| x/y/z start/end [µm] | `structure.json` → `TOT.SC_min_um` / `SC_max_um` (to confirm: TOT vs ST2, SC vs SO) |
-| Objective, R, Infinite FOV, Slicing / Hatching distance | Not found in the output folder: stay manual |
+#### Column mapping (decided)
+SO = shutter open (what was printed), SC = shutter closed (travel moves); verified on the example
+(circles of radius 25 µm → galvo SO range −24.98 … 25.18 µm). Units: power `W` axis in mW,
+velocities in µm/s (confirmed by the labels a job prints: `"P {} mW"`, `"v {:.0f} µm/s"`).
+
+| PrintJobs column | Source | Example |
+|------------------|--------|---------|
+| Print date | `timing.json` → `start` (date + time) | 2026-06-29 15:11 |
+| Print duration [min] | `timing.json` → `duration_s / 60` | 7.07 |
+| Print status | not filled; `aborted` = true → WARNING "check Print status" | |
+| 3DPoli job file | `Script.txt` line 2 `Source:` → network path (rule below) | |
+| Max laser power (calibration) [mW] | `calibration.json` → `max_power_mW` | 12.58 |
+| Laser power [mW] | `structure.json` → `ATT.SC_min_um.Z` / `ATT.SC_max_um.Z` (= W axis) | 8 |
+| Scan speed [mm/s] | `structure.txt` STAGE VELOCITIES: MinSO / MaxSO of the stages with SO values (not NAN), ÷ 1000 | 10 |
+| Tilt alpha [°] / Tilt beta [°] | `structure.json` → `tilt_alpha_deg` / `tilt_beta_deg` | −1.614 / 1.040 |
+| Tilt compensation | `3DPoliFabrication.ini` → `Sample enable TC` (1 → `On`, 0 → `Off`) | On |
+| Infinite FOV | `ST12_ATT_SH_FC_Aerotech.ini` → `Use infinite Field Of View (IFOV)?` (1 → `On`, 0 → `Off`) | Off |
+| x/y/z start / end [µm] | `structure.json` → `TOT.SO_min_um` / `TOT.SO_max_um` X / Y / Z, **absolute** stage positions | z 59763.2 / 59773.9 |
+| Objective, R | not in the output folder (all files searched, incl. `FC0.PGM`): manual | |
+| Slicing / Hatching distance [µm] | only in some job scripts (`SetSlicing`, `SetHatching`): manual for now | |
+| Structures printed | manual (new column, see below) | |
+
+- **Ranges**: when min ≠ max (parameter sweep, e.g. a 3×3 power × speed matrix), write the text
+  `2.5–7.5`; when equal, the number.
+- **Structures printed** (new manual column in Printer settings): cannot be counted automatically.
+  `FC0.PGM` is the fully unrolled program, but its shutter openings (`GALVO LASEROVERRIDE A ON`,
+  46 in the example) count layers / exposure segments, not structures.
+- **Femtika output folder cell**: a full path is used as is; a bare folder name
+  (e.g. `20260623_Pause-Modulation_v02-3_20260629_151101`) is looked up in the logs directory
+  (private setting `femtika.logs_dir`: the "3DPoli fabrication logs" folder on the share).
+- **3DPoli job file path**: `Script.txt` gives the path on the printer PC (there are several PCs,
+  e.g. `C:/Users/<user>/Documents/Experimente chronologisch/X.txt`). Keep the part from
+  `Experimente chronologisch` on and put the share root (private setting `femtika.job_share_root`)
+  in front. File not found on the share → WARNING, cell not filled.
+- The private paths live only in `config/settings.json`; the standalone module gets them as
+  arguments, and its CLI reads them from settings.json with plain `json`.
 
 #### Rules
 - Only fill empty cells; if a filled cell differs from the file value, log a WARNING and keep the cell.
@@ -239,7 +261,7 @@ only delegates to it. Built generically (source folder → file inventory → ma
 writer → summary) but kept in this repo; move it to its own repo once a second use case exists.
 Summary per row and total, e.g. `Row 5: 9/12 cells filled, 2 already filled (kept),
 1 missing (calibration.json not found)`.
-Workflow: the fill command It writes the values into the Excel file;
+Workflow: the fill command writes the values into the Excel file;
 the user opens it in Excel, checks the values, saves (Excel recalculates the formula caches
 that openpyxl drops), then runs `check` / `upload`. `check` / `upload` never read the Femtika folder.
 
@@ -323,11 +345,9 @@ Each step ends with all tests passing and is committed separately.
 - `fill` also fills **3DPoli job file** from `Script.txt` `Source:` once the path mapping
   printer PC → network share is known (setting, e.g. `femtika.job_path_map`).
 
-### Before starting Step 4 (information needed from the user)
-- Confirm the "to confirm" rows of the column mapping (laser power, scan speed, geometry: which stage, SC or SO).
-- Units of the geometry columns: absolute stage positions (e.g. z = 59764 µm) or relative to the start?
-- How Femtika output folder cells are filled today (example value, anonymised).
-- Printer-PC path → network path rule for the 3DPoli job file.
+### Before starting Step 4
+All mapping questions answered (see "Column mapping (decided)"). Still open, not blocking:
+meaning of column R; whether Slicing / Hatching distance should be read from the job script.
 
 ## Later: bam-masterdata Parser for the openBIS Upload Helper
 Decision: **finish this CLI first**, exactly as designed. A second solution that follows

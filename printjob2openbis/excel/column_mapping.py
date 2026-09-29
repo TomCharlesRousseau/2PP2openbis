@@ -78,6 +78,7 @@ PRINTJOB_COLUMNS: List[Column] = [
     Column("Tilt alpha [°]", "tilt_alpha_deg", "Printer settings"),
     Column("Tilt beta [°]", "tilt_beta_deg", "Printer settings"),
     Column("Print duration [min]", "print_duration_min", "Printer settings"),
+    Column("Structures printed", "structures_printed", "Printer settings"),
     # Print geometry
     Column("z start [µm]", "z_start_um", "Print geometry"),
     Column("z end [µm]", "z_end_um", "Print geometry"),

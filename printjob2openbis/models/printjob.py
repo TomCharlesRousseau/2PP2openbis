@@ -103,6 +103,7 @@ class PrintJob:
     tilt_alpha_deg: CellValue = None
     tilt_beta_deg: CellValue = None
     print_duration_min: CellValue = None
+    structures_printed: CellValue = None
 
     # Print geometry
     z_start_um: CellValue = None

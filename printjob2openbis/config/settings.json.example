@@ -26,5 +26,9 @@
   },
   "output": {
     "report_dir": "reports"
+  },
+  "femtika": {
+    "logs_dir": "\\\\server\\share\\3DPoli fabrication logs",
+    "job_share_root": "\\\\server\\share\\2PP"
   }
 }
