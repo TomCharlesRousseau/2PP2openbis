@@ -9,9 +9,11 @@ Online checks (do the referenced objects exist in openBIS?) run only when a
 ``permid_lookup`` callable is given; the CLI passes one that queries openBIS.
 """
 
+import os
 import re
 from collections import defaultdict
 from datetime import date
+from pathlib import Path, PureWindowsPath
 from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from checks.issues import CheckResult, Issue, Level, Stage
@@ -23,7 +25,7 @@ from excel.column_mapping import (
 from excel.excel_reader import ProtocolData
 from models.cell import CellValue
 from models.imaging import SAMPLE_STATE_SINTERED, SAMPLE_STATES, ImagingEvent
-from models.printjob import PRINT_STATUSES, PrintJob
+from models.printjob import POLI_CODE_PREFIX, PRINT_STATUSES, PrintJob, poli_job_file_name
 from models.run import StepKind, group_runs, run_ids_by_kind
 
 #: Returns the subset of the given permIds that exist in openBIS.
@@ -137,6 +139,7 @@ class Checker:
         self._check_print_codes_unique()
         for job in prints:
             self._check_print(job)
+        self._check_poli_codes_unique(prints)
         for job in prints:
             if not job.is_failed:
                 self._check_steps_of_print(job)
@@ -289,11 +292,52 @@ class Checker:
                                  "Resin", "resin_name")
         self._check_permid_value(job, SHEET_PRINTJOBS, Stage.PRINT, "substrate_permid",
                                  "Substrate", "substrate_name")
+        self._check_poli_job_file(job)
 
         if job.is_failed and any(job.step(kind).exists for kind in StepKind):
             self._add(Level.WARNING, Stage.WASHING,
                       "Print status is Failed: the post-processing values of this row are ignored.",
                       SHEET_PRINTJOBS, job.row, "print_status", job.print_code)
+
+    def _check_poli_job_file(self, job: PrintJob) -> None:
+        """
+        3DPoli job file (optional): a ``.txt`` whose name gives a code, readable on disk.
+
+        The job object is a parent of the print step, so an error blocks the print.
+        """
+        if job.poli_job_file is None:
+            return
+        path = str(job.poli_job_file)
+        name = poli_job_file_name(path)
+        if not name.lower().endswith(".txt"):
+            self._print_error(job, Stage.PRINT, "poli_job_file",
+                              f"'{name}' is not a .txt file.")
+        elif job.poli_job_code == POLI_CODE_PREFIX:
+            self._print_error(job, Stage.PRINT, "poli_job_file",
+                              f"'{name}' gives no usable openBIS code "
+                              f"(letters, digits, _ - . needed in the file name).")
+        elif not Path(path).is_file():
+            self._print_error(job, Stage.PRINT, "poli_job_file",
+                              f"File '{path}' not found (or network share not reachable).")
+        elif not os.access(path, os.R_OK):
+            self._print_error(job, Stage.PRINT, "poli_job_file", f"File '{path}' is not readable.")
+
+    def _check_poli_codes_unique(self, prints: List[PrintJob]) -> None:
+        """Two different job file paths must not give the same 3DPoli code."""
+        def path_key(job: PrintJob) -> str:
+            return str(PureWindowsPath(str(job.poli_job_file).strip())).lower()
+
+        jobs_by_code: Dict[str, List[PrintJob]] = defaultdict(list)
+        for job in prints:
+            if job.poli_job_code is not None:
+                jobs_by_code[job.poli_job_code].append(job)
+        for code, jobs in jobs_by_code.items():
+            for job in jobs:
+                others = [j.row for j in jobs if path_key(j) != path_key(job)]
+                if others:
+                    self._print_error(job, Stage.PRINT, "poli_job_file",
+                                      f"Another job file with the same name (code {code}) is used "
+                                      f"in row(s) {', '.join(map(str, others))}; rename one of the files.")
 
     def _check_upload_value(self, row_obj, sheet: str, stage: Stage) -> None:
         """``openBIS upload`` must be empty, Yes or No."""

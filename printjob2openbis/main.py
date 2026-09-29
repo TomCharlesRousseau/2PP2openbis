@@ -8,8 +8,8 @@ Usage::
 
 ``check`` validates the 2PP print protocol and writes nothing. Online (the
 default) it also logs in and verifies that every referenced permId exists.
-``upload`` runs the online check first, then creates the objects: print steps,
-printed samples, washing / CPD / sintering runs, sintered samples, imaging steps.
+``upload`` runs the online check first, then creates the objects: 3DPoli job objects,
+print steps, printed samples, washing / CPD / sintering runs, sintered samples, imaging steps.
 ``--dry-run`` reads openBIS but writes nothing.
 """
 
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 _PACKAGE_DIR = Path(__file__).parent
 
 #: Collection groups the upload writes to.
-UPLOAD_GROUPS = ("printjobs", "samples", "washing", "cpd", "sintering", "imaging")
+UPLOAD_GROUPS = ("poli", "printjobs", "samples", "washing", "cpd", "sintering", "imaging")
 
 
 def _package_path(value: str) -> Path:

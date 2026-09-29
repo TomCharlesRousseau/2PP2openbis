@@ -10,6 +10,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from models import ImagingEvent, PrintJob, StepKind, group_runs, run_ids_by_kind
+from models.printjob import poli_code_from_filename, poli_job_file_name
 
 
 def _job(row: int, code: str, **kwargs) -> PrintJob:
@@ -61,6 +62,28 @@ class TestPrintJob(unittest.TestCase):
         self.assertEqual(job.sintered_sample_code, "2PP_SINTERED_2PP-000001")
         self.assertEqual(job.run_code(StepKind.SINTERING), "2PP_SINT-0003")
         self.assertIsNone(job.run_code(StepKind.WASHING))
+
+    def test_poli_job_code(self):
+        job = _job(3, "x", poli_job_file=r"\\SHARE\2PP\Experimente chronologisch"
+                                         r"\20260303_Array mit Text Logo und QR Code-fix2.txt")
+        self.assertEqual(job.poli_job_code,
+                         "2PP_POLI_20260303_ARRAY_MIT_TEXT_LOGO_UND_QR_CODE-FIX2")
+        self.assertIsNone(_job(3, "x").poli_job_code)
+
+
+class TestPoliCode(unittest.TestCase):
+    """Code of the 3DPoli job object from the file name."""
+
+    def test_umlauts_and_accents(self):
+        self.assertEqual(poli_code_from_filename("Gitter größe Ü1 café.txt"),
+                         "2PP_POLI_GITTER_GROESSE_UE1_CAFE")
+
+    def test_spaces_and_special_characters(self):
+        self.assertEqual(poli_code_from_filename("A  b (2)+c.v2.TXT"), "2PP_POLI_A_B_2C.V2")
+
+    def test_file_name_from_path(self):
+        self.assertEqual(poli_job_file_name(r"C:\jobs\Array v1.txt"), "Array v1.txt")
+        self.assertEqual(poli_job_file_name("/mnt/jobs/Array v1.txt "), "Array v1.txt")
 
 
 class TestRuns(unittest.TestCase):

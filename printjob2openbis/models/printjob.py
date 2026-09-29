@@ -5,7 +5,10 @@ Field names match :data:`excel.column_mapping.PRINTJOB_COLUMNS`. All fields
 hold raw cell values (see :mod:`models.cell`); nothing is validated here.
 """
 
+import re
+import unicodedata
 from dataclasses import dataclass
+from pathlib import PureWindowsPath
 from typing import Optional
 
 from models.cell import CellValue, is_no
@@ -15,6 +18,48 @@ PRINT_STATUS_OK = "OK"
 PRINT_STATUS_PARTIAL = "Partial"
 PRINT_STATUS_FAILED = "Failed"
 PRINT_STATUSES = (PRINT_STATUS_OK, PRINT_STATUS_PARTIAL, PRINT_STATUS_FAILED)
+
+#: Prefix of the 3DPoli job object code.
+POLI_CODE_PREFIX = "2PP_POLI_"
+
+#: German letters transliterated before the accents of other letters are dropped.
+_TRANSLITERATION = {"Ä": "AE", "Ö": "OE", "Ü": "UE", "ß": "SS"}
+
+
+def poli_job_file_name(path: str) -> str:
+    """
+    File name of a 3DPoli job file path (Windows or POSIX separators).
+
+    Example: ``\\\\share\\2PP\\Array v1.txt`` → ``Array v1.txt``.
+    """
+    return PureWindowsPath(path.strip()).name
+
+
+def poli_code_from_filename(name: str) -> str:
+    """
+    openBIS code of a 3DPoli job object, derived from the job file name.
+
+    The ``.txt`` extension is removed, the rest is uppercased; umlauts are
+    transliterated (Ä → AE …), accents dropped, spaces become ``_`` and any
+    character outside ``A-Z 0-9 _ - .`` is removed.
+
+    Example: ``20260303_Array mit Text Logo und QR Code-fix2.txt``
+    → ``2PP_POLI_20260303_ARRAY_MIT_TEXT_LOGO_UND_QR_CODE-FIX2``.
+
+    Args:
+        name: File name (not a path), e.g. from :func:`poli_job_file_name`.
+
+    Returns:
+        The code; only the prefix if nothing usable is left of the name.
+    """
+    stem = name[:-4] if name.lower().endswith(".txt") else name
+    text = stem.upper()
+    for letter, replacement in _TRANSLITERATION.items():
+        text = text.replace(letter, replacement)
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"\s+", "_", text.strip())
+    text = re.sub(r"[^A-Z0-9_.\-]", "", text)
+    return f"{POLI_CODE_PREFIX}{text}"
 
 
 @dataclass
@@ -145,6 +190,13 @@ class PrintJob:
     def sintered_sample_code(self) -> str:
         """Code of the sintered sample, e.g. ``2PP_SINTERED_2PP-000001``."""
         return f"2PP_SINTERED_{self.print_code}".upper()
+
+    @property
+    def poli_job_code(self) -> Optional[str]:
+        """Code of the 3DPoli job object, e.g. ``2PP_POLI_ARRAY_V1``, or None if no job file."""
+        if self.poli_job_file is None:
+            return None
+        return poli_code_from_filename(poli_job_file_name(str(self.poli_job_file)))
 
     def run_code(self, kind: StepKind) -> Optional[str]:
         """Code of the shared *kind* step this print belongs to, or None if no run ID."""

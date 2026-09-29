@@ -159,6 +159,11 @@ def build_imaging_description(event: ImagingEvent) -> str:
     return _with_footer([(None, lines)] if lines else [])
 
 
+def build_poli_job_notes(job: PrintJob) -> str:
+    """Notes of a 3DPoli job object: the job file path (as typed in the Excel)."""
+    return _with_footer([(None, [f"3DPoli job file: {format_value(job.poli_job_file)}"])])
+
+
 def build_sample_description(job: PrintJob) -> str:
     """Description of a printed / sintered sample: print code, design, substrate name, resin name."""
     lines = [

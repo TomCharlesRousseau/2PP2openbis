@@ -1,6 +1,7 @@
 """Tests for checks.checker (synthetic data, fake permIds)."""
 
 import sys
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
@@ -136,6 +137,58 @@ class TestPrint(unittest.TestCase):
     def test_failed_print_skips_post_processing(self):
         result = run([make_print(3, "2PP-000001", print_status="Failed", washing_operator=None)])
         self.assertEqual([i.level for i in result.issues], [Level.WARNING])
+
+
+class TestPoliJobFile(unittest.TestCase):
+    """3DPoli job file column (optional)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _file(self, name: str, folder: str = "") -> str:
+        path = self.dir / folder / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("dvar($a)\n", encoding="utf-8")
+        return str(path)
+
+    def test_valid_file(self):
+        result = run([make_print(3, "2PP-000001", poli_job_file=self._file("Array v1.txt"))])
+        self.assertEqual(result.issues, [], [str(i) for i in result.issues])
+
+    def test_same_file_in_two_rows(self):
+        path = self._file("Array v1.txt")
+        result = run([make_print(3, "2PP-000001", poli_job_file=path),
+                      make_print(4, "2PP-000002", poli_job_file=path)])
+        self.assertEqual(result.issues, [], [str(i) for i in result.issues])
+
+    def test_not_txt(self):
+        result = run([make_print(3, "2PP-000001", poli_job_file=self._file("Array v1.stl"))])
+        self.assertEqual(result.blocked_from("PrintJobs", 3), Stage.PRINT)
+        self.assertIn("not a .txt", issues_at(result, 3, "3DPoli job file")[0].message)
+
+    def test_no_usable_code(self):
+        result = run([make_print(3, "2PP-000001", poli_job_file=self._file("§$%.txt"))])
+        self.assertIn("no usable openBIS code", issues_at(result, 3, "3DPoli job file")[0].message)
+
+    def test_missing_file(self):
+        result = run([make_print(3, "2PP-000001", poli_job_file=str(self.dir / "gone.txt"))])
+        self.assertEqual(result.blocked_from("PrintJobs", 3), Stage.PRINT)
+        self.assertIn("not found", issues_at(result, 3, "3DPoli job file")[0].message)
+
+    def test_same_name_in_two_folders(self):
+        result = run([make_print(3, "2PP-000001", poli_job_file=self._file("Array.txt", "a")),
+                      make_print(4, "2PP-000002", poli_job_file=self._file("Array.txt", "b"))])
+        self.assertEqual(len(issues_at(result, 3, "3DPoli job file")), 1)
+        self.assertEqual(len(issues_at(result, 4, "3DPoli job file")), 1)
+
+    def test_failed_print_still_checked(self):
+        result = run([make_print(3, "2PP-000001", print_status="Failed",
+                                 poli_job_file=str(self.dir / "gone.txt"))])
+        self.assertEqual(result.blocked_from("PrintJobs", 3), Stage.PRINT)
 
 
 class TestPostProcessing(unittest.TestCase):

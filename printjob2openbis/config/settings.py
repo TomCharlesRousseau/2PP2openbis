@@ -12,7 +12,7 @@ from typing import Any, Dict
 _CONFIG_FILE = Path(__file__).parent / "settings.json"
 
 #: Object groups, each stored in its own collection (``collections.<group>``).
-COLLECTION_GROUPS = ("printjobs", "samples", "washing", "cpd", "sintering", "imaging")
+COLLECTION_GROUPS = ("printjobs", "samples", "washing", "cpd", "sintering", "imaging", "poli")
 
 
 class Settings:

@@ -2,6 +2,7 @@
 
 import csv
 import sys
+import zlib
 import tempfile
 import unittest
 from datetime import date, datetime
@@ -23,7 +24,9 @@ from excel.excel_reader import ProtocolData
 from openbis import object_builders
 from unittest.mock import MagicMock
 
-from openbis.object_manager import ExistingObject, NewObject, ObjectManager
+import pandas as pd
+
+from openbis.object_manager import DatasetFile, ExistingObject, NewObject, ObjectManager
 from openbis.uploader import UploadConfig, Uploader, write_report
 from tests.test_checker import INSTRUMENT, PRINTER, make_imaging, make_print
 from tests.workbook_builder import (
@@ -37,7 +40,7 @@ SAMPLES = "/SPACE/PROJECT/SAMPLES"
 CONFIG = UploadConfig(printer_permid=PRINTER, bam_oe="OE_1.1", collection_paths={
     "printjobs": PRINTJOBS, "samples": SAMPLES, "washing": "/SPACE/PROJECT/WASHING",
     "cpd": "/SPACE/PROJECT/CPD", "sintering": "/SPACE/PROJECT/SINTERING",
-    "imaging": "/SPACE/PROJECT/IMAGING"})
+    "imaging": "/SPACE/PROJECT/IMAGING", "poli": "/SPACE/PROJECT/3DPOLI"})
 
 NO_POST_PROCESSING = dict(
     washing_date=None, washing_run_id=None, cpd_date=None, cpd_run_id=None,
@@ -60,6 +63,9 @@ class FakeManager:
         self.created: List[NewObject] = []
         self.linked: Dict[str, List[str]] = {}
         self.updated: Dict[str, Dict[str, str]] = {}
+        self.stored_files: Dict[str, List[DatasetFile]] = {}  # permId -> files in openBIS
+        self.uploaded: List[tuple] = []  # (permId, code, file names)
+        self.reject_upload = False
 
     def missing_collections(self, paths: Iterable[str]) -> List[str]:
         return []
@@ -75,6 +81,14 @@ class FakeManager:
 
     def update_properties(self, existing: ExistingObject, properties: Dict[str, str]) -> None:
         self.updated[existing.code] = properties
+
+    def dataset_files(self, permid: str) -> List[DatasetFile]:
+        return self.stored_files.get(permid, [])
+
+    def upload_dataset(self, permid: str, code: str, files) -> None:
+        if self.reject_upload:
+            raise ValueError("upload rejected")
+        self.uploaded.append((permid, code, [f.name for f in files]))
 
     def add_parents(self, existing: ExistingObject, parents: Iterable[str]) -> List[str]:
         missing = [p for p in parents if p not in existing.parent_permids]
@@ -187,6 +201,130 @@ class TestUploader(unittest.TestCase):
         self.assertEqual([n.code for n in manager.created],
                          ["2PP-000002", "2PP_PRINTED_2PP-000002"])
         self.assertEqual(stats.errors, 1)
+
+
+class TestPoliJob(unittest.TestCase):
+    """3DPoli job objects: one per job file, parent of the print steps."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name) / "Array v1.txt"
+        self.path.write_text("dvar($a)\n", encoding="utf-8")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_one_object_shared_and_linked(self):
+        manager = FakeManager()
+        stats = upload([print_only(3, "2PP-000001", poli_job_file=str(self.path)),
+                        print_only(4, "2PP-000002", poli_job_file=str(self.path)),
+                        print_only(5, "2PP-000003")], manager)
+        self.assertEqual(codes(manager)[0], "2PP_POLI_ARRAY_V1")
+        self.assertEqual(codes(manager).count("2PP_POLI_ARRAY_V1"), 1)
+        job = created(manager, "2PP_POLI_ARRAY_V1")
+        self.assertEqual((job.type_code, job.collection_path, job.parents),
+                         ("GENERAL_PROTOCOL", "/SPACE/PROJECT/3DPOLI", []))
+        self.assertEqual(job.properties["$name"], "Array v1.txt")
+        self.assertEqual(job.properties["general_protocol.protocol_type"],
+                         "3DPoli job file (Femtika 2PP)")
+        self.assertIn("Array v1.txt", job.properties["notes"])
+        self.assertNotIn("bam_oe", job.properties)
+        self.assertEqual(manager.uploaded, [(stats.permids["2PP_POLI_ARRAY_V1"],
+                                             "2PP_POLI_ARRAY_V1", ["Array v1.txt"])])
+        self.assertEqual(stats.datasets, 1)
+        poli_permid = stats.permids["2PP_POLI_ARRAY_V1"]
+        self.assertIn(poli_permid, created(manager, "2PP-000001").parents)
+        self.assertIn(poli_permid, created(manager, "2PP-000002").parents)
+        self.assertEqual(len(created(manager, "2PP-000003").parents), 3)
+
+    def test_failed_print_still_linked(self):
+        manager = FakeManager()
+        upload([make_print(3, "2PP-000001", print_status="Failed",
+                           poli_job_file=str(self.path))], manager)
+        self.assertEqual(codes(manager), ["2PP_POLI_ARRAY_V1", "2PP-000001"])
+
+    def test_rejected_job_blocks_its_prints(self):
+        manager = FakeManager(reject={"2PP_POLI_ARRAY_V1"})
+        stats = upload([print_only(3, "2PP-000001", poli_job_file=str(self.path)),
+                        print_only(4, "2PP-000002")], manager)
+        self.assertEqual(codes(manager), ["2PP-000002", "2PP_PRINTED_2PP-000002"])
+        self.assertEqual(stats.errors, 1)
+
+    def test_existing_job_linked_to_existing_print(self):
+        job = ExistingObject("2PP_POLI_ARRAY_V1", "20210101000000000-60001", "GENERAL_PROTOCOL")
+        step = ExistingObject("2PP-000001", "20210101000000000-50001", "EXPERIMENTAL_STEP",
+                              {PRINTER, FAKE_RESIN_PERMID, FAKE_SUBSTRATE_PERMID})
+        manager = FakeManager({"2PP_POLI_ARRAY_V1": job, "2PP-000001": step})
+        upload([print_only(3, "2PP-000001", poli_job_file=str(self.path))], manager)
+        self.assertNotIn("2PP_POLI_ARRAY_V1", codes(manager))
+        self.assertEqual(manager.linked, {"2PP-000001": ["20210101000000000-60001"]})
+
+
+class TestJobFileDataset(unittest.TestCase):
+    """Job file dataset of an existing 3DPoli job object: no duplicates."""
+
+    JOB_PERMID = "20210101000000000-60001"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name) / "Array v1.txt"
+        self.content = b"dvar($a)\n"
+        self.path.write_bytes(self.content)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _upload(self, stored: List[DatasetFile], update: bool = False):
+        job = ExistingObject("2PP_POLI_ARRAY_V1", self.JOB_PERMID, "GENERAL_PROTOCOL")
+        manager = FakeManager({"2PP_POLI_ARRAY_V1": job})
+        manager.stored_files[self.JOB_PERMID] = stored
+        stats = upload([print_only(3, "2PP-000001", poli_job_file=str(self.path))], manager,
+                       update=update)
+        return manager, stats
+
+    def _same(self, name: str = "Array v1.txt") -> DatasetFile:
+        return DatasetFile(name, len(self.content), zlib.crc32(self.content))
+
+    def _other(self, name: str = "Array v1.txt") -> DatasetFile:
+        return DatasetFile(name, 3, zlib.crc32(b"old"))
+
+    def test_same_content_not_uploaded(self):
+        manager, stats = self._upload([self._other(), self._same()])
+        self.assertEqual(manager.uploaded, [])
+        self.assertEqual(stats.datasets, 0)
+
+    def test_same_content_under_other_name_not_uploaded(self):
+        manager, _ = self._upload([self._same("renamed.txt")])
+        self.assertEqual(manager.uploaded, [])
+
+    def test_no_dataset_yet_uploaded(self):
+        manager, stats = self._upload([])
+        self.assertEqual(len(manager.uploaded), 1)
+        self.assertIn("dataset", stats.records[0].status)
+
+    def test_changed_without_update_only_warns(self):
+        with self.assertLogs("openbis.uploader", "WARNING") as logs:
+            manager, _ = self._upload([self._other()])
+        self.assertEqual(manager.uploaded, [])
+        self.assertIn("--update", logs.output[0])
+
+    def test_changed_with_update_uploads_new_dataset(self):
+        with self.assertLogs("openbis.uploader", "WARNING"):
+            manager, stats = self._upload([self._other()], update=True)
+        self.assertEqual(len(manager.uploaded), 1)
+        self.assertEqual(stats.datasets, 1)
+
+    def test_missing_checksum_not_uploaded(self):
+        manager, _ = self._upload([DatasetFile("Array v1.txt", 3, None)], update=True)
+        self.assertEqual(manager.uploaded, [])
+
+    def test_failed_upload_is_error_but_print_goes_on(self):
+        manager = FakeManager()
+        manager.reject_upload = True
+        stats = upload([print_only(3, "2PP-000001", poli_job_file=str(self.path))], manager)
+        self.assertEqual(stats.errors, 1)
+        self.assertIn("2PP-000001", codes(manager))
+        self.assertIn("dataset error", stats.records[0].status)
 
 
 def codes(manager: FakeManager) -> List[str]:
@@ -399,8 +537,25 @@ class TestObjectManager(unittest.TestCase):
         existing = ExistingObject("Y", "20210101000000000-00002", "SAMPLE")
         self.assertEqual(manager.add_parents(existing, [PRINTER]), [PRINTER])
         manager.update_properties(existing, {"$name": "Z"})
+        manager.upload_dataset("(new) X", "X", [Path("a.txt")])
         openbis.new_sample.assert_not_called()
         openbis.get_sample.assert_not_called()
+        openbis.new_dataset.assert_not_called()
+
+    def test_dataset_files_parses_listing(self):
+        openbis = MagicMock()
+        openbis.get_datasets.return_value = [MagicMock(permId="DS1")]
+        openbis.get_dataset.return_value.get_files.return_value = pd.DataFrame([
+            {"isDirectory": True, "pathInDataSet": "original", "fileSize": 0, "crc32Checksum": 0},
+            {"isDirectory": False, "pathInDataSet": "original/a.txt", "fileSize": 9,
+             "crc32Checksum": "0686806d"},
+            {"isDirectory": False, "pathInDataSet": "original/b.txt", "fileSize": 4,
+             "crc32Checksum": ""},
+        ])
+        manager = ObjectManager(openbis, "SPACE", "PROJECT", dry_run=False)
+        self.assertEqual(manager.dataset_files("P1"), [
+            DatasetFile("a.txt", 9, 0x0686806d), DatasetFile("b.txt", 4, None)])
+        openbis.get_datasets.assert_called_once_with(sample="P1")
 
     def test_find_existing_parses_response(self):
         openbis = MagicMock()

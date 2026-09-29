@@ -1,13 +1,15 @@
 """
 Upload of the checked protocol to openBIS.
 
-Order: print steps → printed samples → washing → CPD → sintering → sintered
-samples → imaging. Each level needs the permIds of the previous one.
+Order: 3DPoli job objects → print steps → printed samples → washing → CPD →
+sintering → sintered samples → imaging. Each level needs the permIds of the previous one.
 
 Washing / CPD / sintering steps are shared per run ID. Their parents are
 collected per print (printed sample → washing step → CPD step) and
 de-duplicated; a run whose creation fails blocks all of its prints.
 
+- 3DPoli job objects get their job file as a ``RAW_DATA`` dataset, without duplicates
+  (compared by size and CRC32 with the files already stored).
 - Rows with ``openBIS upload = No`` and rows blocked by the checker are skipped.
 - A print that fails at one stage is blocked for every later stage.
 - Existing code → skipped; missing parent links are added (never removed).
@@ -19,6 +21,7 @@ Every object touched is recorded in :attr:`UploadStats.records`;
 """
 
 import csv
+import zlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -60,7 +63,7 @@ class ReportRow:
     code: str
     type_code: str
     permid: str
-    status: str  # created / would create / existing [+ updated] [+ linked] / error
+    status: str  # created / would create / existing [+ updated] [+ linked] [+ dataset] / error
     origin: str  # Excel rows the object comes from
 
 
@@ -75,17 +78,20 @@ class UploadStats:
     skipped: int = 0
     updated: int = 0
     linked: int = 0
+    datasets: int = 0
     errors: int = 0
     permids: Dict[str, str] = field(default_factory=dict)  # code → permId
     records: List[ReportRow] = field(default_factory=list)
 
     def summary(self, dry_run: bool = False) -> str:
         """One-line summary; in dry-run worded as what would happen."""
-        created, updated, linked = (
-            ("would be created", "would be updated", "would get new parent links") if dry_run
-            else ("created", "updated", "got new parent links"))
+        created, updated, linked, uploaded = (
+            ("would be created", "would be updated", "would get new parent links",
+             "would be uploaded") if dry_run
+            else ("created", "updated", "got new parent links", "uploaded"))
         return (f"{self.created} {created}, {self.skipped} already existed (skipped), "
-                f"{self.updated} {updated}, {self.linked} {linked}, {self.errors} error(s).")
+                f"{self.updated} {updated}, {self.linked} {linked}, "
+                f"{self.datasets} dataset(s) {uploaded}, {self.errors} error(s).")
 
 
 class Uploader:
@@ -129,6 +135,7 @@ class Uploader:
         existing = self.manager.find_existing(
             self._candidate_codes(prints) + [event.code for event in imaging])
 
+        self._upload_poli_jobs(prints, existing)
         self._upload_print_steps(prints, existing)
         self._upload_printed_samples(prints, existing)
         for kind in StepKind:
@@ -142,6 +149,8 @@ class Uploader:
         """Every code this upload may create (looked up in one batch beforehand)."""
         codes: List[str] = []
         for job in prints:
+            if job.poli_job_code is not None:
+                codes.append(job.poli_job_code)
             codes.append(job.print_step_code)
             if job.is_failed:
                 continue
@@ -156,14 +165,81 @@ class Uploader:
 
     # ── Levels ──────────────────────────────────────────────────────────────
 
+    def _upload_poli_jobs(self, prints: List[PrintJob],
+                          existing: Dict[str, ExistingObject]) -> None:
+        """One SAMPLE per distinct 3DPoli job file; a failure blocks every print using it."""
+        by_code: Dict[str, List[PrintJob]] = {}
+        for job in prints:
+            if job.poli_job_code is not None and not self._blocked(job, Stage.PRINT):
+                by_code.setdefault(job.poli_job_code, []).append(job)
+        for jobs in by_code.values():
+            new = object_builders.poli_job(jobs[0], self.config.collection_paths["poli"])
+            permid = self._ensure(new, existing, jobs, Stage.PRINT)
+            if permid is not None:
+                self._upload_job_file(new, permid, created=new.code not in existing)
+
+    def _upload_job_file(self, new: NewObject, permid: str, created: bool) -> None:
+        """
+        Upload the job file of a 3DPoli job object as a dataset, without duplicates.
+
+        A new object always gets it. For an existing object the file is compared by
+        size and CRC32 with every file of its datasets: same content → nothing to do;
+        no file of that name → upload (e.g. an earlier upload failed); same name but
+        other content → WARNING, uploaded only with ``update`` (old dataset kept).
+        A failed upload is an error but does not block the prints.
+        """
+        path = new.dataset_files[0]
+        if not created:
+            try:
+                data = path.read_bytes()
+            except OSError as exc:
+                logger.error(f"Job file of {new.code}: {exc}")
+                self.stats.errors += 1
+                self._mark(new.code, f"dataset error: {exc}")
+                return
+            size, crc = len(data), zlib.crc32(data)
+            stored = self.manager.dataset_files(permid)
+            if any(f.size == size and f.crc32 == crc for f in stored):
+                return
+            same_name = [f for f in stored if f.name == path.name]
+            if any(f.crc32 is None for f in same_name):
+                logger.warning(f"{new.code}: openBIS gives no checksum for {path.name}; "
+                               f"cannot tell if the job file changed. Nothing uploaded.")
+                return
+            if same_name and not self.update:
+                logger.warning(f"{new.code}: job file {path.name} changed since upload; "
+                               f"run with --update to upload the new version.")
+                return
+            if same_name:
+                logger.warning(f"{new.code}: job file {path.name} changed, uploading a new dataset.")
+        try:
+            self.manager.upload_dataset(permid, new.code, new.dataset_files)
+        except (OSError, ValueError) as exc:
+            logger.error(f"Dataset {path.name} of {new.code}: {exc}")
+            self.stats.errors += 1
+            self._mark(new.code, f"dataset error: {exc}")
+            return
+        self.stats.datasets += 1
+        self._mark(new.code, "dataset")
+
+    def _mark(self, code: str, text: str) -> None:
+        """Append *text* to the report status of the last record of *code*."""
+        for row in reversed(self.stats.records):
+            if row.code == code:
+                row.status += f" + {text}"
+                return
+
     def _upload_print_steps(self, prints: List[PrintJob],
                             existing: Dict[str, ExistingObject]) -> None:
-        """One EXPERIMENTAL_STEP per print."""
+        """One EXPERIMENTAL_STEP per print (parent: its 3DPoli job object, if any)."""
         for job in prints:
             if self._blocked(job, Stage.PRINT):
                 continue
+            poli_permid = (self.stats.permids[job.poli_job_code]
+                           if job.poli_job_code is not None else None)
             new = object_builders.print_step(
-                job, self.config.collection_paths["printjobs"], self.config.printer_permid)
+                job, self.config.collection_paths["printjobs"], self.config.printer_permid,
+                poli_permid)
             self._ensure(new, existing, [job], Stage.PRINT)
 
     def _upload_printed_samples(self, prints: List[PrintJob],

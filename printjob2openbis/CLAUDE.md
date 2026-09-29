@@ -32,7 +32,7 @@ python main.py upload [--dry-run] [--update] [--excel PATH]
 ## Configuration (`config/settings.json`, git-ignored)
 Template: `config/settings.json.example`. Keys:
 - `openbis.api_url`, `openbis.username`, `openbis.space`, `openbis.project`
-- `collections.printjobs | samples | washing | cpd | sintering | imaging`: collection codes
+- `collections.printjobs | samples | washing | cpd | sintering | imaging | poli`: collection codes (`poli` = 3DPoli job objects)
 - `printer.permid`: instrument, parent of every print step
 - `properties.bam_oe`: mandatory `bam_oe` of every SAMPLE
 - `excel.file_path` (default `2PP_print_protocol_v5.xlsx`), `output.report_dir` (default `reports`)
@@ -69,7 +69,8 @@ Imaging date, Imaging operator, *Instrument permId*, Image folder, Notes, openBI
 ## openBIS Object Model
 ```
 Printer (settings) ─┐
-Resin ──────────────┼─> Print step  2PP-000001                  (EXPERIMENTAL_STEP, one per print)
+Resin ──────────────┤
+3DPoli job (opt.) ──┼─> Print step  2PP-000001                  (EXPERIMENTAL_STEP, one per print)
 Substrate ──────────┘        │
      │                       v
      └─────────────────> Printed sample  2PP_PRINTED_2PP-000001 (SAMPLE, not for Failed prints)
@@ -98,6 +99,7 @@ Imaging step  2PP_IMG_<print code>_<technique>_<state>_<YYYYMMDD>  (EXPERIMENTAL
 | Print step | `$name` = Print name, `start_date` = Print date, `operator` = Print operator, `experimental_step.experimental_goals` = Purpose, `experimental_step.experimental_results` = Print status, `notes` = Comments, `experimental_step.experimental_description` |
 | Run step | `$name` = code, `start_date`, `operator`, `experimental_step.experimental_description` (the step's own columns) |
 | Sample | `$name` = code, `bam_oe`, `description` (Print code, Design, Substrate name, Resin name) |
+| 3DPoli job `2PP_POLI_<file name>` (GENERAL_PROTOCOL, one per job file) | `$name` = file name, `general_protocol.protocol_type` = `3DPoli job file (Femtika 2PP)`, `notes` (job file path); dataset `RAW_DATA` = the job `.txt` |
 | Imaging step | `$name` = code, `start_date`, `operator`, `notes`, `experimental_step.experimental_description` (Technique, Sample state, Image folder) |
 
 Descriptions are HTML: one `<p>` per Excel section with `Header: value` lines. Empty values and
@@ -105,7 +107,7 @@ columns that have their own property or parent link are left out. Footer:
 `Uploaded using 2PP2openbis version <version>`.
 
 ### Upload Behaviour
-- Order: print steps → printed samples → washing → CPD → sintering → sintered samples → imaging.
+- Order: 3DPoli job objects → print steps → printed samples → washing → CPD → sintering → sintered samples → imaging.
 - Existing code: log `INFO: <TYPE> <CODE> already exists. Skipping.`, add missing parent
   links (never remove), update properties only with `--update`.
 - Existing code with another type: ERROR, print blocked.
@@ -159,18 +161,19 @@ printjob2openbis/
 
 ## Next Steps
 
-### Next Step 1: 3DPoli Job File as Dataset on a SAMPLE Object
+### Next Step 1: 3DPoli Job File as Dataset on a GENERAL_PROTOCOL Object
 The PrintJobs column **3DPoli job file** holds the path of the 3DPoli job `.txt`
 (the script run on the Femtika printer, stored on the network share under
 `2PP/Experimente chronologisch/`). Today the path only appears in the print step description.
 
 For each distinct job file:
-- Create one openBIS object of type `SAMPLE` in the 3DPoli collection
-  (new key `collections.poli` in settings.json: the `3DPOLI` collection of the 2PP project).
+- Create one openBIS object of type `GENERAL_PROTOCOL` in the 3DPoli collection
+  (a job file is a fabrication recipe, not material; `SAMPLE` was the first idea)
+  (new key `collections.poli` in the private settings.json).
 - Upload the `.txt` file as a **dataset** of type `RAW_DATA` linked to that object (not an
   attachment: datasets are the BAM Data Store standard and the only option of the later
   bam-masterdata parser, see the last section).
-- `bam_oe` is mandatory on `SAMPLE`.
+- No mandatory property on `GENERAL_PROTOCOL` (verified); no `description` property, the path goes to `notes`.
 - Deduplicate: several prints using the same job file share one object.
 - Dry mode and update mode apply as for the other objects.
 
@@ -230,7 +233,13 @@ Each print run creates one folder `<job name>_<YYYYMMDD>_<HHMMSS>/` in the
 - Never write formula (grey) columns.
 - Do not copy NAS credentials or local user paths from `3DPoliFabrication.ini` anywhere.
 
-Decision: **separate command** `python main.py fill`. It writes the values into the Excel file;
+Decision: **standalone module** (e.g. `femtika_fill/`), no openBIS login, no import from `openbis/`
+or `config/settings.py`; callable alone (`python -m femtika_fill <excel>`), `python main.py fill`
+only delegates to it. Built generically (source folder → file inventory → mapping table as data →
+writer → summary) but kept in this repo; move it to its own repo once a second use case exists.
+Summary per row and total, e.g. `Row 5: 9/12 cells filled, 2 already filled (kept),
+1 missing (calibration.json not found)`.
+Workflow: the fill command It writes the values into the Excel file;
 the user opens it in Excel, checks the values, saves (Excel recalculates the formula caches
 that openpyxl drops), then runs `check` / `upload`. `check` / `upload` never read the Femtika folder.
 
@@ -240,7 +249,7 @@ that openpyxl drops), then runs `check` / `upload`. `check` / `upload` never rea
 Order decided: 3DPoli job file first (Steps 1–3), then Femtika auto-fill (Steps 4–6).
 Each step ends with all tests passing and is committed separately.
 
-### Step 1: 3DPoli job model and checks
+### Step 1: 3DPoli job model and checks (done)
 - `models/printjob.py`: `PrintJob.poli_job_code` property (code from the file name, rule above)
   in a helper `poli_code_from_filename(name) -> str`, next to the other code properties.
 - `checks/checker.py`, when **3DPoli job file** is filled (the column stays optional):
@@ -250,11 +259,11 @@ Each step ends with all tests passing and is committed separately.
 - Tests: `tests/test_models.py` (code rule, umlauts, spaces, example above),
   `tests/test_checker.py` (each new ERROR, empty column = no issue). Use `tmp_path` files, not the share.
 
-### Step 2: 3DPoli object creation + parent link
+### Step 2: 3DPoli object creation + parent link (done)
 - `config/settings.py`: `"poli"` added to `COLLECTION_GROUPS`; `main.UPLOAD_GROUPS` too;
   `settings.json.example` gets `collections.poli`.
-- `openbis/object_builders.py`: `poli_job(job, collection_path, bam_oe) -> NewObject`
-  (type `SAMPLE`, `$name` = file name, `bam_oe`, `description` = job file path + footer).
+- `openbis/object_builders.py`: `poli_job(job, collection_path) -> NewObject`
+  (type `GENERAL_PROTOCOL`, `$name` = file name, protocol type, `notes` = job file path + footer).
 - `openbis/uploader.py`:
   - new level `_upload_poli_jobs` run **before** `_upload_print_steps`, one object per distinct code
     (deduplicated like runs); a failure blocks every print using that job (Stage.PRINT);
@@ -264,18 +273,19 @@ Each step ends with all tests passing and is committed separately.
 - Tests: `tests/test_uploader.py` with the fake manager: one object for two prints sharing a file,
   print step parents include the job, failed job blocks its prints, dry-run writes nothing.
 
-### Step 3: Job file dataset
+### Step 3: Job file dataset (done)
 - `NewObject` gets `dataset_files: List[Path]` (default empty); `poli_job` sets it to the job file.
-- `ObjectManager.upload_dataset(permid, files)`: after the object exists,
+- `ObjectManager.upload_dataset(permid, code, files)` and `dataset_files(permid)`: after the object exists,
   `openbis.new_dataset(type="RAW_DATA", sample=<object>, files=[...]).save()`.
-  Dry-run logs `would upload dataset <file name>`. Verify that `RAW_DATA` exists on the instance.
+  Dry-run logs `would upload dataset <file name>`. `RAW_DATA` exists on the instance (verified).
 - Existing job object: list the files of **all** its datasets and compare with the local file:
-  1. **Checksum from openBIS, no download**: openBIS stores size and a checksum (CRC32, on newer
-     versions also SHA-256) for every dataset file; pybis lists them with the dataset's files
-     (`get_files()` / file list — verify column names on the installed version). Compute the same
-     checksum locally (`zlib.crc32` / `hashlib.sha256`) and compare together with the file size.
-  2. **Fallback if no checksum is available**: download the file of each dataset with the same
-     file name to a temp folder and compare bytes (job files are small `.txt`).
+  1. **Checksum from openBIS, no download** (verified on our instance, pybis 1.37.5):
+     `dataset.get_files()` returns a DataFrame with columns `isDirectory`, `pathInDataSet`,
+     `fileSize`, `crc32Checksum` (hex text, e.g. `9686806d`; no SHA-256). Files sit under
+     `original/<file name>`. Compare `fileSize` and CRC32 with the local file:
+     `int(crc32Checksum, 16) == zlib.crc32(data)` (compare as integers, leading zeros may be missing).
+  2. **Checksum empty / 0** (not seen on our instance): WARNING, nothing uploaded (no risk of a
+     duplicate). Downloading and comparing bytes was considered but not implemented.
   - Match with any dataset (also an older one) → skip. No dataset → upload (covers an earlier run
     where the object was created but the upload failed). No match → rules of "Changed job file" above.
 - A failed dataset upload: ERROR in the log and report, the object and the prints stay valid

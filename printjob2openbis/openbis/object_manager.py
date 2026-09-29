@@ -9,6 +9,7 @@ Objects are identified by ``/SPACE/PROJECT/CODE``.
 """
 
 from dataclasses import dataclass, field
+from pathlib import Path, PurePosixPath
 import re
 from typing import Dict, Iterable, List, Optional, Set
 
@@ -19,6 +20,9 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 _BATCH_SIZE = 100
+
+#: Dataset type of uploaded files (verified on the instance).
+DATASET_TYPE = "RAW_DATA"
 
 #: Prefix of placeholder permIds handed out in dry-run mode.
 DRY_RUN_PREFIX = "(new) "
@@ -70,6 +74,7 @@ class NewObject:
         collection_path: ``/SPACE/PROJECT/COLLECTION``.
         properties: Property code → value; ``None`` values are not set.
         parents: Parent permIds.
+        dataset_files: Local files to upload as one ``RAW_DATA`` dataset of the object.
     """
 
     type_code: str
@@ -77,6 +82,23 @@ class NewObject:
     collection_path: str
     properties: Dict[str, Optional[str]]
     parents: List[str]
+    dataset_files: List[Path] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class DatasetFile:
+    """
+    One file of a dataset already stored in openBIS.
+
+    Attributes:
+        name: File name (without the ``original/`` folder).
+        size: Size in bytes.
+        crc32: CRC32 checksum stored by openBIS, or None if openBIS gave none.
+    """
+
+    name: str
+    size: int
+    crc32: Optional[int]
 
 
 class ObjectManager:
@@ -137,7 +159,51 @@ class ObjectManager:
                 found[obj.code] = obj
         return found
 
+    def dataset_files(self, permid: str) -> List[DatasetFile]:
+        """
+        Files of every dataset of the object *permid* (directories left out).
+
+        Uses the size and CRC32 checksum openBIS stores per file; nothing is downloaded.
+        """
+        files: List[DatasetFile] = []
+        for dataset in self.openbis.get_datasets(sample=permid):
+            listing = self.openbis.get_dataset(dataset.permId).get_files()
+            for _, row in listing.iterrows():
+                if row["isDirectory"]:
+                    continue
+                checksum = str(row.get("crc32Checksum") or "").strip()
+                files.append(DatasetFile(
+                    name=PurePosixPath(row["pathInDataSet"]).name,
+                    size=int(row["fileSize"]),
+                    crc32=int(checksum, 16) if checksum not in ("", "0") else None,
+                ))
+        return files
+
     # ── Writes ──────────────────────────────────────────────────────────────
+
+    def upload_dataset(self, permid: str, code: str, files: List[Path]) -> None:
+        """
+        Upload *files* as one ``RAW_DATA`` dataset of the object *permid*.
+
+        Args:
+            permid: The object (a placeholder in dry-run).
+            code: Object code, for log messages.
+            files: Local files.
+
+        Raises:
+            ValueError: openBIS rejected the dataset.
+        """
+        names = ", ".join(f.name for f in files)
+        if self.dry_run:
+            logger.info(f"DRY-RUN: would upload dataset {names} to {code}")
+            return
+        try:
+            dataset = self.openbis.new_dataset(
+                type=DATASET_TYPE, sample=permid, files=[str(f) for f in files])
+            dataset.save()
+        except Exception as exc:  # pybis raises plain Exceptions for upload failures
+            raise ValueError(str(exc)) from exc
+        logger.info(f"Uploaded dataset {names} to {code} ({dataset.permId})")
 
     def create(self, new: NewObject) -> str:
         """

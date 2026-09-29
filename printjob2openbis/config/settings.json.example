@@ -12,7 +12,8 @@
     "washing": "YOUR_WASHING_COLLECTION",
     "cpd": "YOUR_CPD_COLLECTION",
     "sintering": "YOUR_SINTERING_COLLECTION",
-    "imaging": "YOUR_IMAGING_COLLECTION"
+    "imaging": "YOUR_IMAGING_COLLECTION",
+    "poli": "YOUR_3DPOLI_COLLECTION"
   },
   "printer": {
     "permid": "20210101000000000-12345"

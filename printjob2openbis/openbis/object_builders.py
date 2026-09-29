@@ -5,10 +5,12 @@ Pure functions: no openBIS access. Property codes are the verified ones
 (see the ``openbis-properties`` skill); ``None`` values are not written.
 """
 
+from pathlib import Path
 from typing import List, Optional
 
 from excel.description_builder import (
     build_imaging_description,
+    build_poli_job_notes,
     build_print_step_description,
     build_run_step_description,
     build_sample_description,
@@ -18,12 +20,16 @@ from excel.description_builder import (
 )
 from models.cell import CellValue
 from models.imaging import ImagingEvent
-from models.printjob import PrintJob
+from models.printjob import PrintJob, poli_job_file_name
 from models.run import Run, StepKind
 from openbis.object_manager import NewObject
 
 TYPE_EXPERIMENTAL_STEP = "EXPERIMENTAL_STEP"
 TYPE_SAMPLE = "SAMPLE"
+TYPE_GENERAL_PROTOCOL = "GENERAL_PROTOCOL"
+
+#: ``GENERAL_PROTOCOL.PROTOCOL_TYPE`` of every 3DPoli job object.
+POLI_PROTOCOL_TYPE = "3DPoli job file (Femtika 2PP)"
 
 
 def _text(value: CellValue) -> Optional[str]:
@@ -31,12 +37,39 @@ def _text(value: CellValue) -> Optional[str]:
     return None if value is None else format_value(value)
 
 
-def print_step(job: PrintJob, collection_path: str, printer_permid: str) -> NewObject:
+def poli_job(job: PrintJob, collection_path: str) -> NewObject:
+    """
+    3DPoli job object (GENERAL_PROTOCOL) of the job file of *job*; shared by all
+    prints using that file. The job file is uploaded as its dataset.
+
+    No parents; it is a parent of the print steps.
+    """
+    path = str(job.poli_job_file).strip()
+    return NewObject(
+        type_code=TYPE_GENERAL_PROTOCOL,
+        code=str(job.poli_job_code),
+        collection_path=collection_path,
+        properties={
+            "$name": poli_job_file_name(path),
+            "general_protocol.protocol_type": POLI_PROTOCOL_TYPE,
+            "notes": build_poli_job_notes(job),
+        },
+        parents=[],
+        dataset_files=[Path(path)],
+    )
+
+
+def print_step(job: PrintJob, collection_path: str, printer_permid: str,
+               poli_job_permid: Optional[str] = None) -> NewObject:
     """
     Print step (EXPERIMENTAL_STEP) of one print.
 
-    Parents: printer (settings), resin, substrate.
+    Parents: printer (settings), resin, substrate, and the 3DPoli job object if the
+    job file is filled.
     """
+    parents = [printer_permid, str(job.resin_permid), str(job.substrate_permid)]
+    if poli_job_permid is not None:
+        parents.append(poli_job_permid)
     return NewObject(
         type_code=TYPE_EXPERIMENTAL_STEP,
         code=job.print_step_code,
@@ -50,7 +83,7 @@ def print_step(job: PrintJob, collection_path: str, printer_permid: str) -> NewO
             "notes": text_to_html(job.comments),
             "experimental_step.experimental_description": build_print_step_description(job),
         },
-        parents=[printer_permid, str(job.resin_permid), str(job.substrate_permid)],
+        parents=parents,
     )
 
 
