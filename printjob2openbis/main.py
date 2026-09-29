@@ -3,14 +3,19 @@ printjob2openbis command line.
 
 Usage::
 
-    python main.py check [--offline] [--excel PATH]
-    python main.py upload [--dry-run] [--update] [--excel PATH]
+    python main.py [--excel PATH] check [--offline]
+    python main.py [--excel PATH] upload [--dry-run] [--update]
+    python main.py [--excel PATH] fill [--dry-run]
+
+(``--excel`` goes before the command.)
 
 ``check`` validates the 2PP print protocol and writes nothing. Online (the
 default) it also logs in and verifies that every referenced permId exists.
 ``upload`` runs the online check first, then creates the objects: 3DPoli job objects,
 print steps, printed samples, washing / CPD / sintering runs, sintered samples, imaging steps.
 ``--dry-run`` reads openBIS but writes nothing.
+``fill`` fills empty PrintJobs cells from the Femtika output folders (no openBIS;
+same as ``python -m femtika_fill``).
 """
 
 import argparse
@@ -138,6 +143,10 @@ def _parse_args(argv: Optional[List[str]]) -> argparse.Namespace:
                         help="Log what would be created / linked / updated; write nothing.")
     upload.add_argument("--update", action="store_true",
                         help="Also overwrite properties of existing objects from the Excel.")
+    fill = commands.add_parser("fill", help="Fill empty cells from the Femtika output folders "
+                                            "(no openBIS).")
+    fill.add_argument("--dry-run", action="store_true",
+                      help="Show what would be filled; change nothing.")
     return parser.parse_args(argv)
 
 
@@ -148,6 +157,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stdout.reconfigure(errors="replace")  # Windows console: never fail on a character
     cfg = Settings()
     excel = _excel_path(cfg, args.excel)
+    if args.command == "fill":
+        from femtika_fill.__main__ import run as run_fill
+
+        return run_fill(str(excel), cfg.get("femtika.logs_dir"), args.dry_run)
     offline = getattr(args, "offline", False)
 
     try:

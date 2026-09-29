@@ -16,8 +16,9 @@ print steps, printed samples, washing / CPD / sintering runs, sintered samples, 
 ## Command Line
 Run from `printjob2openbis/`:
 ```
-python main.py check  [--offline] [--excel PATH]
-python main.py upload [--dry-run] [--update] [--excel PATH]
+python main.py [--excel PATH] check  [--offline]
+python main.py [--excel PATH] upload [--dry-run] [--update]
+python main.py [--excel PATH] fill   [--dry-run]            (no openBIS; = python -m femtika_fill)
 ```
 - `check`: validates the workbook, writes nothing. Online (default) it also logs in and
   verifies that every referenced permId exists and that `bam_oe` is a BAM_OE term.
@@ -232,7 +233,7 @@ velocities in µm/s (confirmed by the labels a job prints: `"P {} mW"`, `"v {:.0
 | Infinite FOV | `ST12_ATT_SH_FC_Aerotech.ini` → `Use infinite Field Of View (IFOV)?` (1 → `On`, 0 → `Off`) | Off |
 | x/y/z start / end [µm] | `structure.json` → `TOT.SO_min_um` / `TOT.SO_max_um` X / Y / Z, **absolute** stage positions | z 59763.2 / 59773.9 |
 | Objective, R | not in the output folder (all files searched, incl. `FC0.PGM`): manual | |
-| Slicing / Hatching distance [µm] | only in some job scripts (`SetSlicing`, `SetHatching`): manual for now | |
+| Slicing / Hatching distance [µm] | `Script.txt` literal `SetSlicing(dZ, …)` → \|dZ\| / `SetHatching(mode, distance, …)` (STL sliced by 3DPoli; several calls → range). G-code jobs (`ImportGCode`): set in the slicer, **manual**, summary says "job imports G-code … fill by hand". Variable argument or no call → manual with reason | 0.2 / 0.3 |
 | Structures printed | manual (new column, see below) | |
 
 - **Ranges**: when min ≠ max (parameter sweep, e.g. a 3×3 power × speed matrix), write the text
@@ -317,29 +318,36 @@ Each step ends with all tests passing and is committed separately.
   same content, changed content with and without `--update`; dry-run); one manual test upload in a test collection
   (ask the user which project / collection before writing to openBIS).
 
-### Step 4: Femtika output folder reader
-- New package `femtika/`: `reader.py` with a `FemtikaRun` dataclass (typed fields for every value
-  in the column mapping, `None` if a file / key is missing) and `read_run_folder(path) -> FemtikaRun`.
-  Reads only `timing.json`, `structure.json`, `calibration.json`, `Script.txt` (first 2 lines),
-  `3DPoliFabrication.ini` (only the `Sample …` keys). JSON files start with a UTF-8 BOM: open with `utf-8-sig`.
-- A missing or unreadable file → WARNING and the fields stay `None`; never an exception for one run.
-- Tests: small **synthetic** fixture folder `tests/fixtures/femtika_run/` (made-up values;
-  the real example folder is git-ignored and must not be copied into tests).
+### Step 4: Femtika output folder reader (done)
+- Package `femtika_fill/` (standalone, no openBIS / settings import): `reader.py` with the
+  `FemtikaRun` dataclass (values in file units: µm, µm/s, mW, s; ranges as `(min, max)`),
+  `read_run_folder(path)` and `resolve_run_folder(cell, logs_dir)` (bare name → logs dir).
+- Reads `timing.json`, `structure.json`, `structure.txt` (STAGE VELOCITIES, stages `XYZ` / `ABC`
+  only, `PW` = power axes ignored), `calibration.json`, `Script.txt` (lines 1–2),
+  `3DPoliFabrication.ini` and `ST12_ATT_SH_FC_Aerotech.ini` (own parser: split on the first `=`,
+  keys may contain `:`). Files are UTF-8 with BOM → `utf-8-sig`.
+- Never raises for one run: missing files → `missing_files`, unreadable values → `problems`.
+- Verified on the share (13 run folders): 11 read completely; 2 `Untitled1` runs (script never
+  saved → no `Source:` line; shutter never opened → no printed range / power / speed) are reported
+  as "the shutter never opened (nothing printed)".
+- Tests: `tests/test_femtika_reader.py` builds **synthetic** run folders in a temp dir
+  (made-up values; real run data must not be copied into tests).
 
-### Step 5: Column mapping + `fill` command
-- `femtika/fill.py`: `FILL_MAP` (PrintJobs field → function of `FemtikaRun`), only the rows of the
-  confirmed mapping table; `fill_workbook(excel_path, dry_run) -> FillReport`.
-- Writes with openpyxl by header name (reuse `column_mapping`), only empty non-formula cells;
-  differing filled cells → WARNING, kept.
-- Before writing: refuse if the file is open in Excel (`~$` lock file), save a backup copy
-  `<name>_backup_<timestamp>.xlsx`. Check first on a copy of the template that an openpyxl
-  round-trip keeps data validation, comments, colours and formulas.
-- `main.py`: subcommand `fill [--dry-run] [--excel PATH]`; prints per row what was / would be filled,
-  and reminds the user to open and save the file in Excel.
-- The **Femtika output folder** cell: full path, or folder name relative to a new setting
-  `femtika.logs_dir` (to decide).
-- Tests: build a workbook with `tests/workbook_builder.py`, run `fill` against the fixture folder,
-  re-read the cells; filled cells untouched; formula columns untouched.
+### Step 5: Column mapping + `fill` command (done)
+- `femtika_fill/mapping.py`: `FILL_MAP` (PrintJobs field → function of `FemtikaRun` + source),
+  conversions `number` (rounding, `10.0` → `10`), `range_value` (`2.5–7.5` or one number),
+  `on_off`. Only the columns of the decided mapping; manual columns never mapped.
+- `femtika_fill/fill.py`: `fill_workbook(excel_path, logs_dir, dry_run) -> FillReport`.
+  All rows with a Femtika output folder; headers from `excel.column_mapping` (the only project
+  import). Only empty cells are written; same value → "already filled"; other value → kept and
+  reported ("differ (kept)"); `aborted` → WARNING "check Print status".
+- The workbook is changed **in place** (shared file, name kept). Before saving: refuse if open
+  in Excel (`~$` lock file, or save fails), then backup copy
+  `backups/<name>_<YYYYMMDD_HHMMSS>.xlsx` next to the workbook. Nothing filled → nothing saved.
+- CLI: `python -m femtika_fill [EXCEL] [--logs-dir DIR] [--dry-run]` (defaults read from
+  settings.json with plain `json`) and `python main.py [--excel PATH] fill [--dry-run]` (delegates,
+  no login). Summary per row + total, then the reminder to open and save the file in Excel.
+- Tests: `tests/test_femtika_fill.py` (synthetic workbook + run folders).
 
 ### Step 6: Link the two features
 - `fill` also fills **3DPoli job file** from `Script.txt` `Source:` once the path mapping
@@ -347,7 +355,12 @@ Each step ends with all tests passing and is committed separately.
 
 ### Before starting Step 4
 All mapping questions answered (see "Column mapping (decided)"). Still open, not blocking:
-meaning of column R; whether Slicing / Hatching distance should be read from the job script.
+meaning of column R; slicing / hatching of **G-code jobs** (most jobs: 9 of 11 runs on the share).
+They are in the Cura settings block at the end of the G-code (`;SETTING_3 … layer_height = 0.2 …
+infill_line_distance = 2 … line_width = 0.2`), but (1) the G-code paths point to the printer PC
+(only some copies in `2PP/gcode` on the share), (2) values are in slicer units and the job rescales
+them (`RunImportedGCode(… ScaleZ -1/1000)`), (3) which Cura setting is the hatching distance is to
+decide (`infill_line_distance` or `line_width`). Manual until the user decides.
 
 ## Later: bam-masterdata Parser for the openBIS Upload Helper
 Decision: **finish this CLI first**, exactly as designed. A second solution that follows
