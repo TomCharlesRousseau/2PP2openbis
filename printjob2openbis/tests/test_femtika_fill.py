@@ -54,6 +54,11 @@ class TestFillWorkbook(unittest.TestCase):
         self.logs = self.root / "logs"
         self.run = write_run(self.logs / "Test job_20260102_100000")
         self.excel = self.root / "protocol.xlsx"
+        # The job file named in Script.txt, mirrored on the "share"
+        self.share = self.root / "share"
+        self.job = self.share / "Experimente chronologisch" / "Test job.txt"
+        self.job.parent.mkdir(parents=True)
+        self.job.write_text("dvar($a)", encoding="utf-8")
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -62,9 +67,13 @@ class TestFillWorkbook(unittest.TestCase):
         values = {"print_code": "2PP-000001", "femtika_output_folder": self.run.name, **row}
         return write_workbook(self.excel, prints=[values])
 
+    def _fill(self, dry_run: bool = False):
+        return fill_workbook(self.excel, self.logs, dry_run=dry_run, now=NOW,
+                             job_share_root=self.share)
+
     def test_fills_empty_cells(self):
         self._workbook()
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         row = cells(self.excel)
         self.assertEqual(row["Print date"], datetime(2026, 1, 2, 10, 0))
         self.assertEqual(row["Print duration [min]"], 30)
@@ -76,6 +85,7 @@ class TestFillWorkbook(unittest.TestCase):
         self.assertEqual((row["z start [µm]"], row["z end [µm]"]), (1000, 1010))
         self.assertEqual((row["Slicing distance [µm]"], row["Hatching distance [µm]"]), (0.25, 0.5))
         self.assertEqual((row["x start [µm]"], row["x end [µm]"]), (-100, 100))
+        self.assertEqual(row["3DPoli job file"], str(self.job))
         self.assertIsNone(row["Objective"])
         self.assertIsNone(row["Structures printed"])
         self.assertEqual(report.filled, len(FILL_MAP))
@@ -85,22 +95,35 @@ class TestFillWorkbook(unittest.TestCase):
 
     def test_filled_cells_kept(self):
         self._workbook(laser_power_mw=9, tilt_alpha_deg=-1.5, print_date=date(2026, 1, 2))
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         row = cells(self.excel)
         self.assertEqual(row["Laser power [mW]"], 9)
         [line] = report.rows[0].kept
         self.assertIn("Laser power [mW]: cell 9, run 2.5–7.5", line)
         self.assertEqual(sorted(report.rows[0].same), ["Print date", "Tilt alpha [°]"])
+        self.assertEqual(report.rows[0].warnings, [])  # same day: no warning
+
+    def test_other_print_date_is_kept_with_warning(self):
+        self._workbook(print_date=date(2026, 3, 5))
+        report = self._fill()
+        self.assertEqual(cells(self.excel)["Print date"], datetime(2026, 3, 5))
+        self.assertEqual(report.rows[0].warnings, [
+            "Print date 2026-03-05 but the printer ran on 2026-01-02: "
+            "wrong date, or wrong Femtika output folder?"])
+        self.assertEqual(report.rows[0].kept, [])  # a warning, not a plain "differs" line
+        lines = report.lines()
+        self.assertIn("1 WARNING(S)", lines[0])
+        self.assertIn("1 warning(s)", "\n".join(lines))
 
     def test_hyphen_range_counts_as_same(self):
         self._workbook(laser_power_mw="2.5-7.5")
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         self.assertIn("Laser power [mW]", report.rows[0].same)
 
     def test_dry_run_changes_nothing(self):
         self._workbook()
         before = self.excel.read_bytes()
-        report = fill_workbook(self.excel, self.logs, dry_run=True)
+        report = self._fill(dry_run=True)
         self.assertEqual(self.excel.read_bytes(), before)
         self.assertEqual(report.filled, len(FILL_MAP))
         self.assertFalse(report.saved)
@@ -117,21 +140,39 @@ class TestFillWorkbook(unittest.TestCase):
 
     def test_missing_folder_is_row_error(self):
         self._workbook(femtika_output_folder="nope")
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         self.assertIn("run folder not found", report.rows[0].error)
         self.assertFalse(report.saved)
 
     def test_missing_file_reported(self):
         (self.run / "calibration.json").unlink()
         self._workbook()
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         self.assertEqual(report.rows[0].missing,
                          ["Max laser power (calibration) [mW] (calibration.json not found)"])
+
+    def test_job_file_already_typed_is_same(self):
+        # other case, and a hyphen in the name (must not be read as a range)
+        self._workbook(poli_job_file=str(self.job).upper())
+        report = self._fill()
+        self.assertIn("3DPoli job file", report.rows[0].same)
+        self.job.rename(self.job.with_name("Test job-fix2.txt"))
+        write_run(self.run, source=r"C:\Users\pc\Experimente chronologisch\Test job-fix2.txt")
+        self._workbook(poli_job_file=str(self.job.with_name("Test job-fix2.txt")))
+        self.assertIn("3DPoli job file", self._fill().rows[0].same)
+
+    def test_job_file_not_on_share_left_empty(self):
+        self.job.unlink()
+        self._workbook()
+        report = self._fill()
+        self.assertIsNone(cells(self.excel)["3DPoli job file"])
+        self.assertTrue(any(m.startswith("3DPoli job file (job file not found on the share")
+                            for m in report.rows[0].missing))
 
     def test_gcode_job_leaves_slicing_empty_with_reason(self):
         write_run(self.run, body=GCODE_BODY)
         self._workbook()
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         self.assertIsNone(cells(self.excel)["Slicing distance [µm]"])
         self.assertIn("Slicing distance [µm] (job imports G-code (set in the slicer): fill by hand)",
                       report.rows[0].missing)
@@ -139,18 +180,18 @@ class TestFillWorkbook(unittest.TestCase):
     def test_aborted_run_warns(self):
         write_run(self.run, aborted=True)
         self._workbook()
-        report = fill_workbook(self.excel, self.logs, now=NOW)
+        report = self._fill()
         self.assertIn("aborted", report.rows[0].warnings[0])
 
     def test_open_in_excel_refused(self):
         self._workbook()
         (self.root / "~$protocol.xlsx").write_bytes(b"lock")
         with self.assertRaises(WorkbookLockedError):
-            fill_workbook(self.excel, self.logs, now=NOW)
+            self._fill()
 
     def test_summary_lines(self):
         self._workbook(laser_power_mw=9)
-        lines = fill_workbook(self.excel, self.logs, now=NOW).lines()
+        lines = self._fill().lines()
         self.assertTrue(lines[0].startswith(f"Row 3 (2PP-000001): {len(FILL_MAP) - 1}/{len(FILL_MAP)} "
                                             f"cells filled, 1 differ (kept)"))
         self.assertIn("Total: 1 row(s)", "\n".join(lines))

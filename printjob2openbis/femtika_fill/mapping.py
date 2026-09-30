@@ -79,6 +79,8 @@ def _minutes(run: FemtikaRun) -> Optional[Union[int, float]]:
 
 FILL_MAP: List[Target] = [
     Target("print_date", lambda r: r.start, "timing.json start"),
+    Target("poli_job_file", lambda r: None if r.job_file is None else str(r.job_file),
+           "Script.txt Source", note="job_file"),
     Target("max_laser_power_mw", lambda r: number(r.max_power_mw, 3), "calibration.json max_power_mW"),
     Target("laser_power_mw", lambda r: range_value(r.laser_power_mw), "structure.json ATT (W axis)"),
     Target("scan_speed_mm_s", lambda r: range_value(r.scan_speed_um_s, 1 / 1000),

@@ -13,19 +13,23 @@ drops the cached formula values on save, so the file must be opened and saved
 in Excel before ``check`` / ``upload``.
 """
 
+import re
 import shutil
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional
 
 import openpyxl
 
 from excel.column_mapping import FIRST_DATA_ROW, HEADER_ROW, SHEET_PRINTJOBS, column_by_field
-from femtika_fill.mapping import FILL_MAP, Target
-from femtika_fill.reader import FemtikaRun, read_run_folder, resolve_run_folder
+from femtika_fill.mapping import FILL_MAP, RANGE_SEPARATOR, Target
+from femtika_fill.reader import FemtikaRun, job_file_on_share, read_run_folder, resolve_run_folder
 
 BACKUP_DIR = "backups"
+
+#: A range typed by hand with a hyphen, e.g. ``2.5-7.5`` (same as ``2.5–7.5``).
+_TYPED_RANGE = re.compile(r"^(-?\d+(\.\d+)?)\s*-\s*(-?\d+(\.\d+)?)$")
 
 
 class WorkbookLockedError(Exception):
@@ -58,6 +62,8 @@ class RowReport:
             parts.append(f"{len(self.kept)} differ (kept)")
         if self.missing:
             parts.append(f"{len(self.missing)} missing")
+        if self.warnings:
+            parts.append(f"{len(self.warnings)} WARNING(S)")
         return f"{head}: " + ", ".join(parts)
 
 
@@ -91,7 +97,8 @@ class FillReport:
         out.append(f"Total: {len(self.rows)} row(s) with a Femtika output folder, "
                    f"{self.filled} cell(s) {verb}, "
                    f"{sum(len(r.kept) for r in self.rows)} differ (kept), "
-                   f"{sum(len(r.missing) for r in self.rows)} missing, {errors} error(s).")
+                   f"{sum(len(r.missing) for r in self.rows)} missing, "
+                   f"{sum(len(r.warnings) for r in self.rows)} warning(s), {errors} error(s).")
         if self.backup:
             out.append(f"Backup: {self.backup}")
         if self.saved:
@@ -115,13 +122,24 @@ def lock_file(excel_path: Path) -> Optional[Path]:
 
 
 def _same(cell_value: Any, value: Any) -> bool:
-    """True if a filled cell already holds *value* (numbers compared with tolerance, dates by day)."""
+    """
+    True if a filled cell already holds *value*.
+
+    Numbers are compared with a tolerance, dates by day, paths case-insensitively
+    (Windows), and a range typed with a hyphen (``2.5-7.5``) equals ``2.5–7.5``.
+    """
     if isinstance(value, datetime) and isinstance(cell_value, (date, datetime)):
         cell_day = cell_value.date() if isinstance(cell_value, datetime) else cell_value
         return cell_day == value.date()
     if isinstance(cell_value, (int, float)) and isinstance(value, (int, float)):
         return abs(cell_value - value) <= 1e-6 * max(1.0, abs(value))
-    return str(cell_value).strip().replace("-", "–") == str(value).strip()
+    cell_text, text = str(cell_value).strip(), str(value).strip()
+    match = _TYPED_RANGE.match(cell_text)
+    if match:
+        cell_text = f"{match.group(1)}{RANGE_SEPARATOR}{match.group(3)}"
+    if "\\" in text or "/" in text:
+        return str(PureWindowsPath(cell_text.strip('"'))).lower() == str(PureWindowsPath(text)).lower()
+    return cell_text == text
 
 
 def _header_columns(ws) -> Dict[str, int]:
@@ -147,6 +165,12 @@ def _fill_row(ws, row: int, run: FemtikaRun, columns: Dict[str, int], report: Ro
             report.filled.append(f"{header} = {_show(value)}")
         elif _same(cell.value, value):
             report.same.append(header)
+        elif target.field == "print_date":
+            # Kept like any typed value, but a date mismatch often means a wrong run folder.
+            typed = cell.value.date() if isinstance(cell.value, datetime) else cell.value
+            report.warnings.append(
+                f"Print date {_show(typed)} but the printer ran on {_show(value.date())}: "
+                f"wrong date, or wrong Femtika output folder?")
         else:
             report.kept.append(f"{header}: cell {_show(cell.value)}, run {_show(value)}")
 
@@ -171,7 +195,8 @@ def _show(value: Any) -> str:
 
 
 def fill_workbook(excel_path: Path, logs_dir: Optional[Path] = None, dry_run: bool = False,
-                  now: Optional[datetime] = None) -> FillReport:
+                  now: Optional[datetime] = None,
+                  job_share_root: Optional[Path] = None) -> FillReport:
     """
     Fill the empty cells of every PrintJobs row that has a Femtika output folder.
 
@@ -179,6 +204,8 @@ def fill_workbook(excel_path: Path, logs_dir: Optional[Path] = None, dry_run: bo
         excel_path: The print protocol workbook (changed in place).
         logs_dir: Folder holding the run folders, for cells with a bare folder name.
         dry_run: Report what would be filled; change nothing.
+        job_share_root: Share folder holding ``Experimente chronologisch``, to turn the
+            printer-PC job path of ``Script.txt`` into the network path (3DPoli job file).
         now: Timestamp of the backup name (default: now).
 
     Returns:
@@ -220,7 +247,11 @@ def fill_workbook(excel_path: Path, logs_dir: Optional[Path] = None, dry_run: bo
         if not folder.is_dir():
             row_report.error = f"run folder not found: {folder}"
             continue
-        _fill_row(ws, row, read_run_folder(folder), columns, row_report, write=not dry_run)
+        run = read_run_folder(folder)
+        run.job_file, reason = job_file_on_share(run.job_source_path, job_share_root)
+        if reason:
+            run.notes["job_file"] = reason
+        _fill_row(ws, row, run, columns, row_report, write=not dry_run)
 
     if dry_run or report.filled == 0:
         return report

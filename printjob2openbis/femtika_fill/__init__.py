@@ -5,6 +5,6 @@ Standalone: no openBIS login, no import from ``openbis/`` or ``config/settings.p
 Private paths (logs directory, share root) are passed in as arguments.
 """
 
-from .reader import FemtikaRun, read_run_folder, resolve_run_folder
+from .reader import FemtikaRun, job_file_on_share, read_run_folder, resolve_run_folder
 
-__all__ = ["FemtikaRun", "read_run_folder", "resolve_run_folder"]
+__all__ = ["FemtikaRun", "job_file_on_share", "read_run_folder", "resolve_run_folder"]

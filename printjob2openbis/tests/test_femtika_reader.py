@@ -12,7 +12,12 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from femtika_fill.reader import EXPECTED_FILES, read_run_folder, resolve_run_folder
+from femtika_fill.reader import (
+    EXPECTED_FILES,
+    job_file_on_share,
+    read_run_folder,
+    resolve_run_folder,
+)
 
 BOM = "\ufeff"
 
@@ -184,6 +189,37 @@ class TestReadRunFolder(unittest.TestCase):
         self.assertEqual(run.job_name, "Test job")
         self.assertIsNone(run.job_source_path)
         self.assertIn("Source:", run.problems[0])
+
+
+class TestJobFileOnShare(unittest.TestCase):
+    """Printer-PC job path from Script.txt → network path."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.share = Path(self.tmp.name)
+        self.job = self.share / "Experimente chronologisch" / "sub" / "Test job-fix2.txt"
+        self.job.parent.mkdir(parents=True)
+        self.job.write_text("dvar($a)", encoding="utf-8")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_any_printer_pc(self):
+        for pc in (r"C:\Users\printer\Documents", r"C:\Users\OTHERPC\Desktop\old"):
+            path, reason = job_file_on_share(
+                pc + r"\experimente chronologisch\sub\Test job-fix2.txt", self.share)
+            self.assertEqual((path, reason), (self.job, None))
+
+    def test_not_on_share(self):
+        path, reason = job_file_on_share(
+            r"C:\Users\printer\Documents\Experimente chronologisch\gone.txt", self.share)
+        self.assertIsNone(path)
+        self.assertIn("not found on the share", reason)
+
+    def test_other_folder_or_no_source(self):
+        self.assertIn("is not in", job_file_on_share(r"C:\temp\Test job.txt", self.share)[1])
+        self.assertIn("no job file path", job_file_on_share(None, self.share)[1])
+        self.assertIn("not configured", job_file_on_share(r"C:\x.txt", None)[1])
 
 
 class TestResolveRunFolder(unittest.TestCase):

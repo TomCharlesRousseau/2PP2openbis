@@ -221,7 +221,7 @@ velocities in µm/s (confirmed by the labels a job prints: `"P {} mW"`, `"v {:.0
 
 | PrintJobs column | Source | Example |
 |------------------|--------|---------|
-| Print date | `timing.json` → `start` (date + time) | 2026-06-29 15:11 |
+| Print date | `timing.json` → `start` (date + time). A typed date of another day is kept (never overwritten) with a WARNING "wrong date, or wrong Femtika output folder?" | 2026-06-29 15:11 |
 | Print duration [min] | `timing.json` → `duration_s / 60` | 7.07 |
 | Print status | not filled; `aborted` = true → WARNING "check Print status" | |
 | 3DPoli job file | `Script.txt` line 2 `Source:` → network path (rule below) | |
@@ -349,9 +349,18 @@ Each step ends with all tests passing and is committed separately.
   no login). Summary per row + total, then the reminder to open and save the file in Excel.
 - Tests: `tests/test_femtika_fill.py` (synthetic workbook + run folders).
 
-### Step 6: Link the two features
-- `fill` also fills **3DPoli job file** from `Script.txt` `Source:` once the path mapping
-  printer PC → network share is known (setting, e.g. `femtika.job_path_map`).
+### Step 6: Link the two features (done)
+- `reader.job_file_on_share(source, share_root)`: keeps the printer-PC path from the folder
+  `Experimente chronologisch` on (any PC / user) and puts `femtika.job_share_root` in front;
+  the file must exist on the share, else the cell stays empty with the reason.
+- `fill` fills **3DPoli job file** with that path (`FILL_MAP` entry `poli_job_file`); the next
+  `upload` then creates the 3DPoli job object and its dataset (Steps 1–3).
+- Filled-cell comparison: paths case-insensitive; only a typed number range `2.5-7.5` is read as
+  `2.5–7.5` (a hyphen in a file name is not a range).
+- Verified on the share: job file found for all 11 real runs (7 runs share one job file → one
+  3DPoli object); the 2 `Untitled1` runs have no saved job file.
+- Note: the job file on the share can be edited after the run; `Script.txt` in the run folder is
+  the exact version that ran (possible later option: upload that copy instead).
 
 ### Before starting Step 4
 All mapping questions answered (see "Column mapping (decided)"). Still open, not blocking:

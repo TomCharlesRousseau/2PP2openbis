@@ -43,6 +43,9 @@ INFINITE_FOV_KEY = "Use infinite Field Of View (IFOV)?"
 
 AXES = ("X", "Y", "Z")
 
+#: Folder of the 3DPoli job files, on the printer PCs and on the share.
+JOB_FOLDER = "Experimente chronologisch"
+
 #: Motion stages of the STAGE VELOCITIES table (``PW`` = power axes, not a scan speed).
 SPEED_STAGES = ("XYZ", "ABC")
 
@@ -77,6 +80,8 @@ class FemtikaRun:
             ``SetSlicing`` / ``SetHatching`` in the job script (3DPoli slices an STL).
         notes: Why a value is empty although nothing is wrong (field → reason),
             e.g. the job imports G-code, so slicing / hatching are in the G-code file.
+        job_file: Network path of the job file; set by the fill from
+            :attr:`job_source_path` with :func:`job_file_on_share` (needs the share root).
     """
 
     folder: Path
@@ -101,6 +106,7 @@ class FemtikaRun:
     slicing_um: Optional[Range] = None
     hatching_um: Optional[Range] = None
     notes: Dict[str, str] = field(default_factory=dict)
+    job_file: Optional[Path] = None
 
 
 def resolve_run_folder(cell_value: str, logs_dir: Optional[Path]) -> Path:
@@ -123,6 +129,37 @@ def resolve_run_folder(cell_value: str, logs_dir: Optional[Path]) -> Path:
     if is_bare_name and logs_dir is not None:
         return Path(logs_dir) / text
     return Path(text)
+
+
+def job_file_on_share(source_path: Optional[str],
+                      share_root: Optional[Path]) -> Tuple[Optional[Path], Optional[str]]:
+    """
+    Network path of the 3DPoli job file given by ``Script.txt`` (path on a printer PC).
+
+    The printer PCs keep the jobs in a folder ``Experimente chronologisch`` that is
+    mirrored on the share: the part of the path from that folder on is put behind
+    *share_root*. E.g. ``C:\\Users\\<user>\\Documents\\Experimente chronologisch\\X.txt``
+    → ``<share_root>\\Experimente chronologisch\\X.txt``.
+
+    Args:
+        source_path: Path from the ``Source:`` line, or None.
+        share_root: Folder on the share holding ``Experimente chronologisch``, or None.
+
+    Returns:
+        (path, None) if the file exists on the share, else (None, reason).
+    """
+    if not source_path:
+        return None, "no job file path in Script.txt (script not saved?)"
+    if share_root is None:
+        return None, "share root not configured (femtika.job_share_root)"
+    parts = PureWindowsPath(source_path).parts
+    index = next((i for i, part in enumerate(parts) if part.lower() == JOB_FOLDER.lower()), None)
+    if index is None:
+        return None, f"job file is not in '{JOB_FOLDER}' on the printer PC: fill by hand"
+    path = Path(share_root).joinpath(JOB_FOLDER, *parts[index + 1:])
+    if not path.is_file():
+        return None, f"job file not found on the share: {path}"
+    return path, None
 
 
 def read_run_folder(folder: Path) -> FemtikaRun:
